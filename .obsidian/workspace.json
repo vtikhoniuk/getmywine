@@ -1,0 +1,226 @@
+{
+  "main": {
+    "id": "033a0333bdf1de4e",
+    "type": "split",
+    "children": [
+      {
+        "id": "303f04f66601b154",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "f30f5ac1f77e8882",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "50-project-docs/chat-bot-project/sequence-diagrams.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "sequence-diagrams"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "989ebbb22e31605c",
+    "type": "split",
+    "children": [
+      {
+        "id": "ce52f80344e3de1d",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "3732ee644aed5c95",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "83a81e0e89aa32fb",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "93fc1eeb239de02f",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 204.50390243530273
+  },
+  "right": {
+    "id": "98930e53b76c6e24",
+    "type": "split",
+    "children": [
+      {
+        "id": "fc6cd6adb39b7ff6",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "28e45f829962795c",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "answer.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for answer"
+            }
+          },
+          {
+            "id": "42bec42f8d6ee02d",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "answer.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from answer"
+            }
+          },
+          {
+            "id": "85738f32734833fe",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "398eb6faa303cc81",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "8c1f93e0a2025bf2",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "50-project-docs/chat-bot-project/personas/client-anna.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of client-anna"
+            }
+          }
+        ],
+        "currentTab": 4
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "3732ee644aed5c95",
+  "lastOpenFiles": [
+    "50-project-docs/chat-bot-project/information-architecture.md",
+    "50-project-docs/chat-bot-project/er-diagram.md",
+    "50-project-docs/chat-bot-project/brief.md",
+    "02-skills/01-discovery-skills/34-persona-interview.md",
+    "02-skills/01-discovery-skills/33-persona-generation.md",
+    "02-skills/01-discovery-skills/32-market-research.md",
+    "02-skills/01-discovery-skills/31-lean-canvas.md",
+    "02-skills/01-discovery-skills/21-nfr-collection.md",
+    "02-skills/01-discovery-skills/13-user-journey-map.md",
+    "02-skills/01-discovery-skills/12-user-story-mapping.md",
+    "02-skills/01-discovery-skills/11-brief-writing.md",
+    "01-agents/01-discovery-agents/10-business-analyst.md",
+    "50-project-docs/chat-bot-project/personas/client-anna.md",
+    "50-project-docs/chat-bot-project/validation-report.md",
+    "50-project-docs/chat-bot-project/wireframes/03-report-editor.md",
+    "50-project-docs/chat-bot-project/wireframes/02-client-card.md",
+    "50-project-docs/chat-bot-project/wireframes/01-dashboard.md",
+    "50-project-docs/chat-bot-project/wireframes",
+    "50-project-docs/chat-bot-project/sequence-diagrams.md",
+    "50-project-docs/chat-bot-project/api-inventory.md",
+    "50-project-docs/chat-bot-project/nfr.md",
+    "50-project-docs/chat-bot-project/c4-architecture.md",
+    "50-project-docs/chat-bot-project/personas/nutritionist-marina.md",
+    "50-project-docs/chat-bot-project/personas",
+    "50-project-docs/chat-bot-project/lean-canvas.md",
+    "50-project-docs/chat-bot-project/user-journey-map.md",
+    "50-project-docs/chat-bot-project/user-story-map.md",
+    "README.md",
+    "50-project-docs/chat-bot-project",
+    "02-skills/02-solution-design-skills",
+    "50-project-docs/02-project-02",
+    "50-project-docs/01-project-01",
+    "inbox/diagram-tests",
+    "00-temporaty-files",
+    "02-skills/01-discovery-skills/Untitled",
+    "02-skills/02-solution-design-agents"
+  ]
+}
