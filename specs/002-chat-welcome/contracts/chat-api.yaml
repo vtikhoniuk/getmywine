@@ -1,0 +1,246 @@
+openapi: 3.0.3
+info:
+  title: AI-Sommelier Chat API
+  description: API для чат-интерфейса AI-сомелье
+  version: 1.0.0
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+paths:
+  /chat/conversation:
+    get:
+      summary: Получить или создать диалог
+      description: |
+        Возвращает существующий диалог пользователя или создаёт новый.
+        При создании нового диалога автоматически добавляется приветственное сообщение.
+      operationId: getOrCreateConversation
+      tags:
+        - chat
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Диалог с историей сообщений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+        '401':
+          description: Не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /chat/messages:
+    post:
+      summary: Отправить сообщение
+      description: |
+        Отправляет сообщение пользователя и получает ответ от AI.
+        Оба сообщения сохраняются в историю диалога.
+      operationId: sendMessage
+      tags:
+        - chat
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+      responses:
+        '200':
+          description: Ответ AI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessagePair'
+        '400':
+          description: Некорректное сообщение
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /chat/messages/history:
+    get:
+      summary: Получить историю сообщений
+      description: Возвращает историю сообщений с пагинацией
+      operationId: getMessageHistory
+      tags:
+        - chat
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Количество сообщений
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+        - name: before
+          in: query
+          description: ID сообщения для пагинации (загрузить сообщения до этого)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список сообщений
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageListResponse'
+        '401':
+          description: Не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+
+  schemas:
+    SendMessageRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          description: Текст сообщения
+          example: "Посоветуй вино к стейку"
+
+    MessageResponse:
+      type: object
+      required:
+        - id
+        - role
+        - content
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID сообщения
+        role:
+          type: string
+          enum: [user, assistant, system]
+          description: Отправитель сообщения
+        content:
+          type: string
+          description: Текст сообщения
+        created_at:
+          type: string
+          format: date-time
+          description: Время отправки
+        is_welcome:
+          type: boolean
+          description: Приветственное сообщение
+          default: false
+
+    MessagePair:
+      type: object
+      required:
+        - user_message
+        - assistant_message
+      properties:
+        user_message:
+          $ref: '#/components/schemas/MessageResponse'
+        assistant_message:
+          $ref: '#/components/schemas/MessageResponse'
+
+    ConversationResponse:
+      type: object
+      required:
+        - id
+        - messages
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID диалога
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageResponse'
+          description: История сообщений (последние 50)
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания диалога
+        is_new:
+          type: boolean
+          description: Новый диалог (первый визит)
+          default: false
+
+    MessageListResponse:
+      type: object
+      required:
+        - messages
+        - has_more
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageResponse'
+        has_more:
+          type: boolean
+          description: Есть ли ещё сообщения для загрузки
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Описание ошибки
+
+    ValidationErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: array
+          items:
+            type: object
+            properties:
+              loc:
+                type: array
+                items:
+                  type: string
+              msg:
+                type: string
+              type:
+                type: string
+
+tags:
+  - name: chat
+    description: Чат с AI-сомелье

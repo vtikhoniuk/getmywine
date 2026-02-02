@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чат с AI-сомелье</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .logo {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-decoration: none;
+        }
+        .nav {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        .btn-logout {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .age-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 8px 16px;
+            text-align: center;
+            font-size: 14px;
+            border-bottom: 1px solid #ffc107;
+        }
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .message {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+        .message.user {
+            align-items: flex-end;
+        }
+        .message.assistant {
+            align-items: flex-start;
+        }
+        .message-content {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .message.assistant .message-content {
+            background: #f0f0f0;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+        .message-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+        }
+        .input-area {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .message-input {
+            flex: 1;
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 24px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .message-input:focus {
+            border-color: #667eea;
+        }
+        .message-input:disabled {
+            background: #f5f5f5;
+        }
+        .send-btn {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .send-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 14px;
+        }
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+        .loading-dots span {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        .char-count {
+            font-size: 12px;
+            color: #999;
+            text-align: right;
+            margin-top: 4px;
+        }
+        .char-count.warning {
+            color: #e74c3c;
+        }
+        .error-message {
+            background: #fee;
+            color: #c00;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="/" class="logo">🍷 AI-Sommelier</a>
+        <nav class="nav">
+            <button onclick="logout()" class="btn-logout">Выйти</button>
+        </nav>
+    </header>
+
+    <div class="age-warning">
+        ⚠️ Данный сервис предназначен только для лиц старше 18 лет. Чрезмерное употребление алкоголя вредит вашему здоровью.
+    </div>
+
+    <div class="chat-container">
+        <div class="error-message" id="error-message"></div>
+
+        <div class="messages" id="messages">
+            <!-- Messages will be loaded here -->
+        </div>
+
+        <div id="loading-indicator" class="loading" style="display: none;">
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            AI-сомелье думает...
+        </div>
+
+        <div class="input-area">
+            <input
+                type="text"
+                id="message-input"
+                class="message-input"
+                placeholder="Спросите о вине..."
+                maxlength="2000"
+            >
+            <button onclick="sendMessage()" id="send-btn" class="send-btn">Отправить</button>
+        </div>
+        <div id="char-count" class="char-count">0 / 2000</div>
+    </div>
+
+    <script>
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const errorMessage = document.getElementById('error-message');
+        const charCount = document.getElementById('char-count');
+
+        // Load conversation on page load
+        loadConversation();
+
+        // Update character count
+        messageInput.addEventListener('input', () => {
+            const len = messageInput.value.length;
+            charCount.textContent = `${len} / 2000`;
+            charCount.className = len > 1900 ? 'char-count warning' : 'char-count';
+        });
+
+        // Send on Enter key
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        async function loadConversation() {
+            try {
+                const response = await fetch('/api/v1/chat/conversation');
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                if (!response.ok) throw new Error('Failed to load conversation');
+
+                const data = await response.json();
+                renderMessages(data.messages);
+            } catch (error) {
+                showError('Не удалось загрузить чат. Попробуйте обновить страницу.');
+            }
+        }
+
+        async function sendMessage() {
+            const content = messageInput.value.trim();
+            if (!content) return;
+
+            // Disable input while sending
+            setLoading(true);
+            hideError();
+
+            try {
+                const response = await fetch('/api/v1/chat/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Ошибка отправки сообщения');
+                }
+
+                const data = await response.json();
+
+                // Add messages to chat
+                addMessage(data.user_message);
+                addMessage(data.assistant_message);
+
+                // Clear input
+                messageInput.value = '';
+                charCount.textContent = '0 / 2000';
+
+            } catch (error) {
+                showError(error.message || 'Произошла ошибка. Попробуйте ещё раз.');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function renderMessages(messages) {
+            messagesContainer.innerHTML = '';
+            messages.forEach(msg => addMessage(msg));
+        }
+
+        function addMessage(msg) {
+            const div = document.createElement('div');
+            div.className = `message ${msg.role}`;
+
+            const time = new Date(msg.created_at).toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            div.innerHTML = `
+                <div class="message-content">${escapeHtml(msg.content)}</div>
+                <div class="message-time">${time}</div>
+            `;
+
+            messagesContainer.appendChild(div);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function setLoading(loading) {
+            messageInput.disabled = loading;
+            sendBtn.disabled = loading;
+            loadingIndicator.style.display = loading ? 'flex' : 'none';
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/v1/auth/logout', { method: 'POST' });
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Logout failed');
+            }
+        }
+    </script>
+</body>
+</html>

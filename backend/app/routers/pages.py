@@ -38,3 +38,12 @@ async def password_reset_page(request: Request):
         "auth/reset-password.html",
         {"request": request},
     )
+
+
+@router.get("/chat", response_class=HTMLResponse)
+async def chat_page(request: Request):
+    """Chat page with AI sommelier."""
+    return templates.TemplateResponse(
+        "chat.html",
+        {"request": request},
+    )
