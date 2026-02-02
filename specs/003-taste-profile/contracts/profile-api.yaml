@@ -1,0 +1,467 @@
+openapi: 3.0.3
+info:
+  title: Taste Profile API
+  description: API для управления вкусовым профилем пользователя
+  version: 1.0.0
+
+paths:
+  /api/profile:
+    get:
+      summary: Получить профиль текущего пользователя
+      description: Возвращает вкусовой профиль авторизованного пользователя
+      operationId: getProfile
+      tags:
+        - Profile
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Профиль пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TasteProfile'
+        '401':
+          description: Не авторизован
+        '404':
+          description: Профиль не найден
+
+    patch:
+      summary: Обновить профиль
+      description: Частичное обновление вкусового профиля
+      operationId: updateProfile
+      tags:
+        - Profile
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProfileUpdate'
+      responses:
+        '200':
+          description: Обновлённый профиль
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TasteProfile'
+        '400':
+          description: Невалидные данные
+        '401':
+          description: Не авторизован
+
+  /api/profile/onboarding/skip:
+    post:
+      summary: Пропустить онбординг
+      description: Пропускает опрос о предпочтениях, создаёт пустой профиль
+      operationId: skipOnboarding
+      tags:
+        - Onboarding
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Онбординг пропущен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TasteProfile'
+        '400':
+          description: Онбординг уже завершён
+        '401':
+          description: Не авторизован
+
+  /api/profile/onboarding/start:
+    post:
+      summary: Начать онбординг
+      description: Начинает диалог о вкусовых предпочтениях
+      operationId: startOnboarding
+      tags:
+        - Onboarding
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Онбординг начат, первый вопрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingQuestion'
+        '400':
+          description: Онбординг уже в процессе или завершён
+        '401':
+          description: Не авторизован
+
+  /api/profile/onboarding/answer:
+    post:
+      summary: Ответить на вопрос онбординга
+      description: Обрабатывает ответ пользователя на текущий вопрос
+      operationId: answerOnboarding
+      tags:
+        - Onboarding
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OnboardingAnswer'
+      responses:
+        '200':
+          description: Ответ принят, следующий вопрос или завершение
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/OnboardingQuestion'
+                  - $ref: '#/components/schemas/OnboardingComplete'
+        '400':
+          description: Невалидный ответ
+        '401':
+          description: Не авторизован
+
+  /api/profile/budget:
+    put:
+      summary: Установить бюджет
+      description: Устанавливает или обновляет бюджетный диапазон
+      operationId: setBudget
+      tags:
+        - Profile
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BudgetUpdate'
+      responses:
+        '200':
+          description: Бюджет обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TasteProfile'
+        '400':
+          description: Невалидный диапазон
+        '401':
+          description: Не авторизован
+
+  /api/profile/wine-memories:
+    get:
+      summary: Список запомнившихся вин
+      description: Возвращает все запомнившиеся вина пользователя
+      operationId: getWineMemories
+      tags:
+        - Wine Memory
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Список вин
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WineMemoryList'
+        '401':
+          description: Не авторизован
+
+    post:
+      summary: Добавить запомнившееся вино
+      description: Сохраняет описание вина и извлекает характеристики
+      operationId: addWineMemory
+      tags:
+        - Wine Memory
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WineMemoryCreate'
+      responses:
+        '201':
+          description: Вино сохранено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WineMemory'
+        '400':
+          description: Невалидные данные
+        '401':
+          description: Не авторизован
+
+  /api/profile/wine-memories/{id}:
+    delete:
+      summary: Удалить запомнившееся вино
+      description: Удаляет запись о вине
+      operationId: deleteWineMemory
+      tags:
+        - Wine Memory
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Удалено
+        '401':
+          description: Не авторизован
+        '404':
+          description: Не найдено
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+
+  schemas:
+    ProfileParameter:
+      type: object
+      properties:
+        value:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Значение параметра (1-5)
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Уверенность (0.0-1.0)
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - value
+        - confidence
+
+    AromaPreference:
+      type: object
+      properties:
+        aroma:
+          type: string
+          description: Название аромата
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+      required:
+        - aroma
+        - confidence
+
+    TasteProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        sweetness:
+          $ref: '#/components/schemas/ProfileParameter'
+        acidity:
+          $ref: '#/components/schemas/ProfileParameter'
+        tannins:
+          $ref: '#/components/schemas/ProfileParameter'
+        body:
+          $ref: '#/components/schemas/ProfileParameter'
+        preferred_aromas:
+          type: array
+          items:
+            $ref: '#/components/schemas/AromaPreference'
+        budget_range:
+          type: string
+          enum: [budget_1, budget_2, budget_3, budget_4, budget_5]
+          nullable: true
+        experience_level:
+          type: string
+          enum: [novice, amateur, expert]
+          nullable: true
+        onboarding_status:
+          type: string
+          enum: [pending, skipped, in_progress, completed]
+        onboarding_step:
+          type: integer
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ProfileUpdate:
+      type: object
+      properties:
+        sweetness:
+          type: integer
+          minimum: 1
+          maximum: 5
+        acidity:
+          type: integer
+          minimum: 1
+          maximum: 5
+        tannins:
+          type: integer
+          minimum: 1
+          maximum: 5
+        body:
+          type: integer
+          minimum: 1
+          maximum: 5
+        preferred_aromas:
+          type: array
+          items:
+            type: string
+        experience_level:
+          type: string
+          enum: [novice, amateur, expert]
+
+    BudgetUpdate:
+      type: object
+      properties:
+        budget_range:
+          type: string
+          enum: [budget_1, budget_2, budget_3, budget_4, budget_5]
+      required:
+        - budget_range
+
+    OnboardingQuestion:
+      type: object
+      properties:
+        step:
+          type: integer
+          description: Номер шага (1-5)
+        total_steps:
+          type: integer
+          description: Всего шагов
+        question:
+          type: string
+          description: Текст вопроса от AI
+        question_type:
+          type: string
+          enum: [sweetness, experience, foods, aromas, budget]
+        suggested_options:
+          type: array
+          items:
+            type: string
+          description: Предложенные варианты ответа
+        allows_free_text:
+          type: boolean
+          description: Можно ли отвечать свободным текстом
+      required:
+        - step
+        - total_steps
+        - question
+        - question_type
+
+    OnboardingAnswer:
+      type: object
+      properties:
+        answer:
+          type: string
+          description: Ответ пользователя (свободный текст или выбранный вариант)
+      required:
+        - answer
+
+    OnboardingComplete:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [completed]
+        message:
+          type: string
+          description: Благодарственное сообщение от AI
+        profile:
+          $ref: '#/components/schemas/TasteProfile'
+      required:
+        - status
+        - profile
+
+    WineMemory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        raw_description:
+          type: string
+          description: Оригинальное описание пользователя
+        extracted_type:
+          type: string
+          enum: [red, white, rose, sparkling]
+          nullable: true
+        extracted_region:
+          type: string
+          nullable: true
+        extracted_notes:
+          type: array
+          items:
+            type: string
+        sentiment:
+          type: string
+          enum: [liked, disliked, neutral]
+        context:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    WineMemoryCreate:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 2000
+          description: Описание вина своими словами
+        sentiment:
+          type: string
+          enum: [liked, disliked, neutral]
+        context:
+          type: string
+          maxLength: 500
+          description: Контекст (где/когда пили)
+      required:
+        - description
+        - sentiment
+
+    WineMemoryList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WineMemory'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
