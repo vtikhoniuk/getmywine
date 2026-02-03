@@ -1,0 +1,359 @@
+openapi: 3.0.3
+info:
+  title: Wine Catalog API
+  description: API для каталога вин AI-Sommelier
+  version: 1.0.0
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+paths:
+  /wines:
+    get:
+      summary: List wines
+      description: Получить список вин с фильтрацией и пагинацией
+      operationId: listWines
+      tags:
+        - wines
+      parameters:
+        - name: wine_type
+          in: query
+          description: Фильтр по типу вина
+          schema:
+            $ref: '#/components/schemas/WineType'
+        - name: sweetness
+          in: query
+          description: Фильтр по сладости
+          schema:
+            $ref: '#/components/schemas/Sweetness'
+        - name: price_min
+          in: query
+          description: Минимальная цена (USD)
+          schema:
+            type: number
+            minimum: 0
+        - name: price_max
+          in: query
+          description: Максимальная цена (USD)
+          schema:
+            type: number
+            minimum: 0
+        - name: country
+          in: query
+          description: Фильтр по стране
+          schema:
+            type: string
+        - name: body_min
+          in: query
+          description: Минимальное тело (1-5)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+        - name: body_max
+          in: query
+          description: Максимальное тело (1-5)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+        - name: limit
+          in: query
+          description: Количество результатов
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          description: Смещение для пагинации
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Список вин
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WineListResponse'
+
+  /wines/{wine_id}:
+    get:
+      summary: Get wine by ID
+      description: Получить детальную информацию о вине
+      operationId: getWine
+      tags:
+        - wines
+      parameters:
+        - name: wine_id
+          in: path
+          required: true
+          description: UUID вина
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Детали вина
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wine'
+        '404':
+          description: Вино не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /wines/search:
+    post:
+      summary: Semantic search
+      description: Семантический поиск вин по текстовому запросу
+      operationId: searchWines
+      tags:
+        - wines
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+
+components:
+  schemas:
+    WineType:
+      type: string
+      enum:
+        - red
+        - white
+        - rose
+        - sparkling
+      description: Тип вина
+
+    Sweetness:
+      type: string
+      enum:
+        - dry
+        - semi_dry
+        - semi_sweet
+        - sweet
+      description: Уровень сладости
+
+    PriceRange:
+      type: string
+      enum:
+        - budget
+        - mid
+        - premium
+      description: Ценовой диапазон
+
+    Wine:
+      type: object
+      required:
+        - id
+        - name
+        - producer
+        - country
+        - region
+        - grape_varieties
+        - wine_type
+        - sweetness
+        - acidity
+        - tannins
+        - body
+        - description
+        - price_usd
+        - price_range
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 255
+        producer:
+          type: string
+          maxLength: 255
+        vintage_year:
+          type: integer
+          minimum: 1900
+          maximum: 2030
+          nullable: true
+        country:
+          type: string
+          maxLength: 100
+        region:
+          type: string
+          maxLength: 255
+        appellation:
+          type: string
+          maxLength: 255
+          nullable: true
+        grape_varieties:
+          type: array
+          items:
+            type: string
+          minItems: 1
+        wine_type:
+          $ref: '#/components/schemas/WineType'
+        sweetness:
+          $ref: '#/components/schemas/Sweetness'
+        acidity:
+          type: integer
+          minimum: 1
+          maximum: 5
+        tannins:
+          type: integer
+          minimum: 1
+          maximum: 5
+        body:
+          type: integer
+          minimum: 1
+          maximum: 5
+        description:
+          type: string
+        tasting_notes:
+          type: string
+          nullable: true
+        food_pairings:
+          type: array
+          items:
+            type: string
+          nullable: true
+        price_usd:
+          type: number
+          format: float
+        price_range:
+          $ref: '#/components/schemas/PriceRange'
+        image_url:
+          type: string
+          format: uri
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    WineSummary:
+      type: object
+      description: Краткая информация о вине для списков
+      required:
+        - id
+        - name
+        - producer
+        - wine_type
+        - price_usd
+        - country
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        producer:
+          type: string
+        vintage_year:
+          type: integer
+          nullable: true
+        wine_type:
+          $ref: '#/components/schemas/WineType'
+        sweetness:
+          $ref: '#/components/schemas/Sweetness'
+        price_usd:
+          type: number
+        country:
+          type: string
+        image_url:
+          type: string
+          nullable: true
+
+    WineListResponse:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WineSummary'
+        total:
+          type: integer
+          description: Общее количество вин (с учётом фильтров)
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    SearchRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          minLength: 3
+          maxLength: 500
+          description: Текстовый запрос для семантического поиска
+        limit:
+          type: integer
+          default: 5
+          minimum: 1
+          maximum: 20
+          description: Количество результатов
+        filters:
+          type: object
+          properties:
+            wine_type:
+              $ref: '#/components/schemas/WineType'
+            price_max:
+              type: number
+
+    SearchResponse:
+      type: object
+      required:
+        - results
+        - query
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResult'
+        query:
+          type: string
+          description: Исходный запрос
+
+    SearchResult:
+      type: object
+      required:
+        - wine
+        - score
+      properties:
+        wine:
+          $ref: '#/components/schemas/WineSummary'
+        score:
+          type: number
+          format: float
+          description: Релевантность (0-1, выше = лучше)
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string

@@ -77,3 +77,61 @@ async def client(test_db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 def settings():
     """Get test settings."""
     return get_settings()
+
+
+# Aliases for compatibility with test files
+@pytest_asyncio.fixture(scope="function")
+async def db_session(test_db: AsyncSession) -> AsyncGenerator[AsyncSession, None]:
+    """Alias for test_db fixture."""
+    yield test_db
+
+
+@pytest_asyncio.fixture(scope="function")
+async def async_client(client: AsyncClient) -> AsyncGenerator[AsyncClient, None]:
+    """Alias for client fixture."""
+    yield client
+
+
+@pytest_asyncio.fixture(scope="function")
+async def seed_wines(db_session: AsyncSession) -> AsyncGenerator[None, None]:
+    """Load seed wines from JSON file into test database."""
+    import json
+    import uuid
+    from pathlib import Path
+
+    from app.models.wine import Wine, WineType, Sweetness, PriceRange
+
+    # Load seed data
+    seed_file = Path(__file__).parent.parent / "app" / "data" / "wines_seed.json"
+    with open(seed_file) as f:
+        data = json.load(f)
+
+    # Insert wines
+    for wine_data in data["wines"]:
+        wine = Wine(
+            id=uuid.uuid4(),
+            name=wine_data["name"],
+            producer=wine_data["producer"],
+            vintage_year=wine_data.get("vintage_year"),
+            country=wine_data["country"],
+            region=wine_data["region"],
+            appellation=wine_data.get("appellation"),
+            grape_varieties=wine_data["grape_varieties"],
+            wine_type=WineType(wine_data["wine_type"]),
+            sweetness=Sweetness(wine_data["sweetness"]),
+            acidity=wine_data["acidity"],
+            tannins=wine_data["tannins"],
+            body=wine_data["body"],
+            description=wine_data["description"],
+            tasting_notes=wine_data.get("tasting_notes"),
+            food_pairings=wine_data.get("food_pairings"),
+            price_usd=wine_data["price_usd"],
+            price_range=PriceRange(wine_data["price_range"]),
+            image_url=wine_data.get("image_url"),
+            # embedding is None for SQLite tests (no pgvector support)
+            embedding=[0.0] * 1536 if hasattr(Wine, 'embedding') else None,
+        )
+        db_session.add(wine)
+
+    await db_session.commit()
+    yield None

@@ -176,7 +176,7 @@
                 });
 
                 if (response.status === 201) {
-                    window.location.href = '/';
+                    window.location.href = '/chat';
                 } else if (response.status === 422 || response.status === 400) {
                     const result = await response.json();
                     let message = result.detail;

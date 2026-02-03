@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs test lint shell db-shell clean
+.PHONY: help build up down restart logs test lint shell db-shell clean db-reset db-reseed
 
 # Default target
 help:
@@ -18,6 +18,8 @@ help:
 	@echo ""
 	@echo "  make shell      - Открыть shell в backend контейнере"
 	@echo "  make db-shell   - Открыть psql в базе данных"
+	@echo "  make db-reset   - Пересоздать БД с нуля (удаляет все данные!)"
+	@echo "  make db-reseed  - Перезаполнить вина (downgrade + upgrade)"
 	@echo "  make clean      - Удалить контейнеры и volumes"
 
 # Docker commands
@@ -61,7 +63,22 @@ shell:
 	docker exec -it ai-sommelier-backend /bin/bash
 
 db-shell:
-	docker exec -it ai-sommelier-db psql -U postgres -d ai_sommelier
+	docker exec -it ai-sommelier-db psql -U ai_sommelier -d ai_sommelier
+
+# Database reset - полное пересоздание БД
+db-reset:
+	@echo "⚠️  Удаляем все данные и пересоздаём БД..."
+	docker compose down
+	docker volume rm aiwine-hub_postgres_data 2>/dev/null || true
+	docker compose up -d
+	@echo "✅ БД пересоздана, миграции применены"
+
+# Reseed wines - только перезаполнение вин
+db-reseed:
+	@echo "🍷 Перезаполняем вина..."
+	docker compose exec backend alembic downgrade 005
+	docker compose exec backend alembic upgrade head
+	@echo "✅ Вина перезаполнены"
 
 # Cleanup
 clean:

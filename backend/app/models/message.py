@@ -39,7 +39,12 @@ class Message(Base):
         index=True,
     )
     role: Mapped[MessageRole] = mapped_column(
-        Enum(MessageRole, name="message_role", create_type=False),
+        Enum(
+            MessageRole,
+            name="message_role",
+            create_type=False,
+            values_callable=lambda x: [e.value for e in x],
+        ),
         nullable=False,
     )
     content: Mapped[str] = mapped_column(

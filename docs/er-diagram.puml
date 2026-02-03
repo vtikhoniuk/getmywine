@@ -1,0 +1,83 @@
+@startuml ER Diagram - AI Wine Hub
+
+skinparam linetype ortho
+
+entity "users" as users {
+    * id : UUID <<PK>>
+    --
+    * email : VARCHAR(255) <<unique>>
+    * password_hash : VARCHAR(255)
+    * is_age_verified : BOOLEAN
+    * is_active : BOOLEAN
+    * created_at : TIMESTAMPTZ
+    * updated_at : TIMESTAMPTZ
+}
+
+entity "conversations" as conversations {
+    * id : UUID <<PK>>
+    --
+    * user_id : UUID <<FK, unique>>
+    * created_at : TIMESTAMPTZ
+    * updated_at : TIMESTAMPTZ
+}
+
+entity "messages" as messages {
+    * id : UUID <<PK>>
+    --
+    * conversation_id : UUID <<FK>>
+    * role : enum(user,assistant,system)
+    * content : TEXT
+    * created_at : TIMESTAMPTZ
+    * is_welcome : BOOLEAN
+}
+
+entity "password_reset_tokens" as prt {
+    * id : UUID <<PK>>
+    --
+    * user_id : UUID <<FK>>
+    * token : VARCHAR(255) <<unique>>
+    * is_used : BOOLEAN
+    * created_at : TIMESTAMPTZ
+    * expires_at : TIMESTAMPTZ
+}
+
+entity "login_attempts" as la {
+    * id : UUID <<PK>>
+    --
+    * email : VARCHAR(255)
+    * ip_address : VARCHAR(45)
+    * success : BOOLEAN
+    * created_at : TIMESTAMPTZ
+}
+
+entity "wines" as wines {
+    * id : UUID <<PK>>
+    --
+    * name : VARCHAR(255)
+    * producer : VARCHAR(255)
+    vintage_year : INTEGER
+    * country : VARCHAR(100)
+    * region : VARCHAR(255)
+    appellation : VARCHAR(255)
+    * grape_varieties : VARCHAR[]
+    * wine_type : enum(red,white,rose,sparkling)
+    * sweetness : enum(dry,semi_dry,semi_sweet,sweet)
+    * acidity : INTEGER [1-5]
+    * tannins : INTEGER [1-5]
+    * body : INTEGER [1-5]
+    * description : TEXT
+    tasting_notes : TEXT
+    food_pairings : VARCHAR[]
+    * price_usd : NUMERIC(10,2)
+    * price_range : enum(budget,mid,premium)
+    image_url : VARCHAR(500)
+    embedding : VECTOR(1536)
+    * created_at : TIMESTAMPTZ
+    * updated_at : TIMESTAMPTZ
+}
+
+users ||--o| conversations : "1:1"
+conversations ||--o{ messages : "1:N"
+users ||--o{ prt : "1:N"
+
+@enduml

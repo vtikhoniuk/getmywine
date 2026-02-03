@@ -165,7 +165,7 @@
                 });
 
                 if (response.status === 200) {
-                    window.location.href = '/';
+                    window.location.href = '/chat';
                 } else if (response.status === 401) {
                     errorDiv.textContent = 'Неверный email или пароль';
                     errorDiv.style.display = 'block';

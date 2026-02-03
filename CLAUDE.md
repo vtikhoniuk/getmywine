@@ -165,6 +165,8 @@
 - Python 3.12+ + FastAPI, SQLAlchemy 2.0, Jinja2, HTMX (002-chat-welcome)
 - PostgreSQL 16 (существующая БД из US-001) (002-chat-welcome)
 - PostgreSQL 16 (существующая БД) (003-taste-profile)
+- Python 3.12+ + FastAPI, SQLAlchemy 2.0, pgvector, Alembic (005-wine-catalog)
+- PostgreSQL 16 + pgvector extension (005-wine-catalog)
 
 ## Recent Changes
 - 002-chat-welcome: Added Python 3.12+ + FastAPI, SQLAlchemy 2.0, Jinja2, HTMX

@@ -6,7 +6,7 @@ from starlette.responses import JSONResponse
 
 from app.config import get_settings
 from app.core.rate_limit import limiter
-from app.routers import auth, chat, pages
+from app.routers import auth, chat, pages, wine
 
 settings = get_settings()
 
@@ -36,6 +36,7 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
 # Include routers
 app.include_router(auth.router)
 app.include_router(chat.router)
+app.include_router(wine.router)
 app.include_router(pages.router)
 
 
