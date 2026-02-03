@@ -6,8 +6,8 @@ on:
 
 env:
   BASTION_HOST: bastion.camp.aitalenthub.ru
-  TEAM_VM_IP: 10.20.0.31
   TEAM_USER: team10
+  TEAM_VM_IP: 10.20.0.31
 
 jobs:
   deploy:
