@@ -1,0 +1,41 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  BASTION_HOST: bastion.camp.aitalenthub.ru
+  TEAM_VM_IP: 10.20.0.31
+  TEAM_USER: team10
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup SSH and known hosts
+      run: |
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        ssh-keyscan -H ${{ env.BASTION_HOST }} >> ~/.ssh/known_hosts
+    
+    - name: Deploy with Docker Compose
+      env:
+        JUMP_KEY: ${{ secrets.DEPLOY_JUMP_KEY }}
+        VM_KEY: ${{ secrets.DEPLOY_KEY }}
+      run: |
+        echo "$JUMP_KEY" > ~/.ssh/jump_key
+        echo "$VM_KEY" > ~/.ssh/vm_key
+        chmod 600 ~/.ssh/jump_key ~/.ssh/vm_key
+        ssh -o ProxyCommand="ssh -i ~/.ssh/jump_key -W %h:%p jump@${{ env.BASTION_HOST }}" \
+            -i ~/.ssh/vm_key ${{ env.TEAM_USER }}@${{ env.TEAM_VM_IP }} << 'REMOTE'
+          cd ~/workspace/myapp
+          git pull origin main
+          docker compose down
+          docker compose build
+          docker compose up -d
+        REMOTE
