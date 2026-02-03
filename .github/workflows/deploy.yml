@@ -31,7 +31,8 @@ jobs:
         echo "$JUMP_KEY" > ~/.ssh/jump_key
         echo "$VM_KEY" > ~/.ssh/vm_key
         chmod 600 ~/.ssh/jump_key ~/.ssh/vm_key
-        ssh -o ProxyCommand="ssh -i ~/.ssh/jump_key -W %h:%p jump@${{ env.BASTION_HOST }}" \
+        ssh -o StrictHostKeyChecking=no \
+            -o ProxyCommand="ssh -o StrictHostKeyChecking=no -i ~/.ssh/jump_key -W %h:%p jump@${{ env.BASTION_HOST }}" \
             -i ~/.ssh/vm_key ${{ env.TEAM_USER }}@${{ env.TEAM_VM_IP }} << 'REMOTE'
           cd ~/workspace/myapp
           git pull origin main
