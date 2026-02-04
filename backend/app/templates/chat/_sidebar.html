@@ -1,0 +1,57 @@
+<!-- Session sidebar with date grouping -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h2>История</h2>
+        <button
+            class="btn-new-session"
+            hx-post="/api/v1/chat/sessions"
+            hx-target="#sidebar-sessions"
+            hx-swap="innerHTML"
+            hx-on::after-request="loadCurrentSession()"
+            title="Новый диалог"
+        >
+            + Новый диалог
+        </button>
+    </div>
+
+    <div class="sidebar-sessions" id="sidebar-sessions"
+         hx-get="/api/v1/chat/sessions?format=html"
+         hx-trigger="load"
+         hx-swap="innerHTML">
+        <!-- Sessions loaded via HTMX -->
+        <div class="loading-sessions">Загрузка...</div>
+    </div>
+</aside>
+
+<!-- Session list template (rendered server-side or via JS) -->
+<template id="session-list-template">
+    <div class="session-group" data-date-group="today">
+        <div class="session-group-header">Сегодня</div>
+        <div class="session-group-items"></div>
+    </div>
+    <div class="session-group" data-date-group="yesterday">
+        <div class="session-group-header">Вчера</div>
+        <div class="session-group-items"></div>
+    </div>
+    <div class="session-group" data-date-group="older">
+        <div class="session-group-header">Ранее</div>
+        <div class="session-group-items"></div>
+    </div>
+</template>
+
+<template id="session-item-template">
+    <div class="session-item" data-session-id="">
+        <div class="session-info" onclick="loadSession(this.parentElement.dataset.sessionId)">
+            <div class="session-title"></div>
+            <div class="session-meta">
+                <span class="session-time"></span>
+                <span class="session-messages"></span>
+            </div>
+        </div>
+        <button class="btn-delete-session"
+                title="Удалить"
+                onclick="deleteSession(this.parentElement.dataset.sessionId, event)">
+            ×
+        </button>
+    </div>
+</template>

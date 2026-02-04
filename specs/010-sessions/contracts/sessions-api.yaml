@@ -1,0 +1,299 @@
+openapi: 3.0.3
+info:
+  title: AI-Sommelier Sessions API
+  version: 1.0.0
+  description: API для управления сессиями диалогов с AI-сомелье
+
+servers:
+  - url: /api/v1
+    description: API prefix
+
+tags:
+  - name: sessions
+    description: Операции с сессиями
+
+paths:
+  /chat/sessions:
+    get:
+      tags: [sessions]
+      summary: Получить список сессий пользователя
+      description: Возвращает список сессий, отсортированных по дате (новые сверху)
+      operationId: listSessions
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Список сессий
+          content:
+            text/html:
+              schema:
+                type: string
+                description: HTMX partial с списком сессий
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [sessions]
+      summary: Создать новую сессию
+      description: Создаёт новую сессию и возвращает welcome message
+      operationId: createSession
+      responses:
+        '201':
+          description: Сессия создана
+          content:
+            text/html:
+              schema:
+                type: string
+                description: HTMX partial с новым чатом
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /chat/sessions/{sessionId}:
+    get:
+      tags: [sessions]
+      summary: Получить детали сессии
+      description: Возвращает историю сообщений сессии (read-only)
+      operationId: getSession
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      responses:
+        '200':
+          description: Детали сессии
+          content:
+            text/html:
+              schema:
+                type: string
+                description: HTMX partial с историей сообщений
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [sessions]
+      summary: Удалить сессию
+      description: Удаляет сессию и все её сообщения
+      operationId: deleteSession
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      responses:
+        '200':
+          description: Сессия удалена
+          content:
+            text/html:
+              schema:
+                type: string
+                description: Пустой partial или редирект
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /chat/sessions/{sessionId}/title:
+    patch:
+      tags: [sessions]
+      summary: Обновить название сессии
+      description: Вызывается автоматически после первого ответа AI
+      operationId: updateSessionTitle
+      parameters:
+        - $ref: '#/components/parameters/sessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionTitleUpdate'
+      responses:
+        '200':
+          description: Название обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /chat/sessions/current:
+    get:
+      tags: [sessions]
+      summary: Получить текущую активную сессию
+      description: Возвращает активную сессию или создаёт новую
+      operationId: getCurrentSession
+      responses:
+        '200':
+          description: Текущая сессия
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  parameters:
+    sessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: UUID сессии
+
+  schemas:
+    SessionSummary:
+      type: object
+      required:
+        - id
+        - created_at
+        - updated_at
+        - is_active
+        - message_count
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 30
+          nullable: true
+          example: "Вино к стейку"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+        message_count:
+          type: integer
+
+    SessionDetail:
+      allOf:
+        - $ref: '#/components/schemas/SessionSummary'
+        - type: object
+          required:
+            - messages
+          properties:
+            messages:
+              type: array
+              items:
+                $ref: '#/components/schemas/Message'
+
+    SessionList:
+      type: object
+      required:
+        - sessions
+        - has_more
+        - total
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionSummary'
+        has_more:
+          type: boolean
+        total:
+          type: integer
+
+    SessionTitleUpdate:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          maxLength: 30
+          example: "Бордо на ДР"
+
+    Message:
+      type: object
+      required:
+        - id
+        - role
+        - content
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [user, assistant, system]
+        content:
+          type: string
+        is_welcome:
+          type: boolean
+          default: false
+        created_at:
+          type: string
+          format: date-time
+
+  responses:
+    Unauthorized:
+      description: Требуется авторизация
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: "Not authenticated"
+
+    Forbidden:
+      description: Нет доступа к ресурсу
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: "Not authorized to access this session"
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              detail:
+                type: string
+                example: "Session not found"
+
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+
+security:
+  - cookieAuth: []

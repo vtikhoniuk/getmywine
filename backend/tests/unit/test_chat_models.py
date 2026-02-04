@@ -43,12 +43,13 @@ class TestConversationModel:
         assert "created_at" in columns
         assert "updated_at" in columns
 
-    def test_conversation_user_id_is_unique(self):
-        """user_id should be unique constraint."""
+    def test_conversation_user_id_allows_multiple_sessions(self):
+        """user_id should NOT be unique to allow multiple sessions per user (EPIC-010)."""
         from app.models.conversation import Conversation
 
         user_id_column = Conversation.__table__.columns["user_id"]
-        assert user_id_column.unique is True
+        # unique=False or None means no unique constraint
+        assert user_id_column.unique is not True
 
     def test_conversation_repr(self):
         """Conversation repr should include id and user_id."""

@@ -27,6 +27,36 @@ class Settings(BaseSettings):
     # Cookies
     cookie_secure: bool = True  # Set to False in tests
 
+    # LLM Configuration
+    # Provider: "openrouter" (recommended), "anthropic", or "openai"
+    llm_provider: str = "openrouter"
+
+    # OpenRouter (uses OpenAI-compatible API)
+    openrouter_api_key: str = ""
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+
+    # Direct API keys (if not using OpenRouter)
+    anthropic_api_key: str = ""
+    openai_api_key: str = ""
+
+    # Model settings
+    # OpenRouter models: "anthropic/claude-sonnet-4", "openai/gpt-4o", etc.
+    # Direct: "claude-sonnet-4-20250514", "gpt-4o"
+    llm_model: str = "anthropic/claude-sonnet-4"
+    llm_temperature: float = 0.7
+    llm_max_tokens: int = 2000
+
+    # Conversation history
+    llm_max_history_messages: int = 10  # How many previous messages to include
+
+    # Events API (optional, for real-time events)
+    calendarific_api_key: str = ""  # For holiday data
+    events_country: str = "RU"
+
+    # Session management
+    session_inactivity_minutes: int = 30  # Auto-close session after inactivity
+    session_retention_days: int = 90  # Keep sessions for this many days
+
     model_config = {
         "env_file": ".env",
         "env_file_encoding": "utf-8",

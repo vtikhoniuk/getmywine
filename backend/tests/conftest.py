@@ -42,8 +42,16 @@ async def test_db() -> AsyncGenerator[AsyncSession, None]:
         poolclass=StaticPool,
     )
 
+    # Get tables to create (exclude Wine table for SQLite - it uses ARRAY/Vector)
+    from app.models.wine import Wine
+    tables_to_create = [
+        table for table in Base.metadata.tables.values()
+        if table.name != Wine.__tablename__
+    ]
+
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        for table in tables_to_create:
+            await conn.run_sync(table.create, checkfirst=True)
 
     async_session = async_sessionmaker(
         engine, class_=AsyncSession, expire_on_commit=False
@@ -53,7 +61,8 @@ async def test_db() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        for table in reversed(tables_to_create):
+            await conn.run_sync(table.drop, checkfirst=True)
 
     await engine.dispose()
 

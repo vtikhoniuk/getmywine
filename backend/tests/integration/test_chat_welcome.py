@@ -37,8 +37,8 @@ class TestChatWelcome:
         welcome = data["messages"][0]
         assert welcome["role"] == "assistant"
         assert welcome["is_welcome"] is True
-        assert "AI-сомелье" in welcome["content"]
-        assert "вино" in welcome["content"].lower()
+        # Welcome message should be a greeting with suggestions
+        assert "Привет" in welcome["content"] or "вино" in welcome["content"].lower()
 
     async def test_welcome_message_shown_only_once(self, client: AsyncClient):
         """Welcome message should only appear on first visit."""
@@ -121,5 +121,5 @@ class TestChatWelcome:
 
         welcome = data["messages"][0]
         assert welcome["is_welcome"] is True
-        # Welcome message explains capabilities
-        assert "Подобрать вино" in welcome["content"] or "рекомендовать" in welcome["content"].lower()
+        # Welcome message should be a greeting (new format with proactive suggestions)
+        assert "Привет" in welcome["content"] or "вино" in welcome["content"].lower()

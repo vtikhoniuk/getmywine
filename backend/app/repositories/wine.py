@@ -22,6 +22,17 @@ class WineRepository:
         )
         return result.scalar_one_or_none()
 
+    async def get_by_ids(self, wine_ids: list[uuid.UUID]) -> list[Wine]:
+        """Get wines by list of IDs, preserving order."""
+        if not wine_ids:
+            return []
+        result = await self.db.execute(
+            select(Wine).where(Wine.id.in_(wine_ids))
+        )
+        wines_dict = {wine.id: wine for wine in result.scalars().all()}
+        # Preserve original order
+        return [wines_dict[wid] for wid in wine_ids if wid in wines_dict]
+
     async def get_list(
         self,
         limit: int = 20,

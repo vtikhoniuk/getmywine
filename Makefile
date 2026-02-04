@@ -85,4 +85,4 @@ clean:
 	docker-compose down -v --remove-orphans
 
 # Rebuild and restart
-rebuild: build up
+rebuild: down build up

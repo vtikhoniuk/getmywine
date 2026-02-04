@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Чат с AI-сомелье</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -49,6 +50,153 @@
         .btn-logout:hover {
             background: rgba(255,255,255,0.3);
         }
+
+        /* Main layout with sidebar */
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Sidebar styles */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .sidebar-header h2 {
+            font-size: 18px;
+            color: #333;
+            margin: 0;
+        }
+        .btn-new-session {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-new-session:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn-new-session:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-new-session .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 6px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .sidebar-sessions {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px 0;
+        }
+        .loading-sessions {
+            padding: 16px;
+            color: #999;
+            text-align: center;
+        }
+        .session-group {
+            margin-bottom: 8px;
+        }
+        .session-group:empty {
+            display: none;
+        }
+        .session-group-header {
+            padding: 8px 16px 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .session-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .session-item:hover {
+            background: #f5f5f5;
+        }
+        .session-item.active {
+            background: #f0f0ff;
+            border-left-color: #667eea;
+        }
+        .session-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .session-title {
+            font-size: 14px;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .session-title.untitled {
+            color: #999;
+            font-style: italic;
+        }
+        .session-meta {
+            font-size: 12px;
+            color: #999;
+            margin-top: 2px;
+            display: flex;
+            gap: 8px;
+        }
+        .btn-delete-session {
+            background: none;
+            border: none;
+            color: #ccc;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.2s, color 0.2s;
+        }
+        .session-item:hover .btn-delete-session {
+            opacity: 1;
+        }
+        .btn-delete-session:hover {
+            color: #e74c3c;
+            background: #fee;
+        }
+        .no-sessions {
+            padding: 24px 16px;
+            text-align: center;
+            color: #999;
+        }
+
+        /* Chat container */
         .chat-container {
             flex: 1;
             display: flex;
@@ -183,43 +331,167 @@
             margin-bottom: 16px;
             display: none;
         }
+        .read-only-banner {
+            background: #fff3cd;
+            color: #856404;
+            padding: 8px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* Wine cards */
+        .wine-cards {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+        .wine-card {
+            flex: 0 0 auto;
+            width: 160px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .wine-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .wine-card-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            background: #f5f5f5;
+        }
+        .wine-card-image.placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: #ccc;
+        }
+        .wine-card-info {
+            padding: 10px;
+        }
+        .wine-card-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            line-height: 1.3;
+            max-height: 2.6em;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        .wine-card-meta {
+            font-size: 11px;
+            color: #888;
+            margin-top: 4px;
+        }
+        .wine-card-price {
+            font-size: 13px;
+            font-weight: 600;
+            color: #667eea;
+            margin-top: 6px;
+        }
+
+        /* Mobile sidebar toggle */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -280px;
+                top: 60px;
+                bottom: 0;
+                z-index: 100;
+                transition: left 0.3s;
+            }
+            .sidebar.open {
+                left: 0;
+            }
+            .btn-toggle-sidebar {
+                display: block;
+            }
+        }
+        @media (min-width: 769px) {
+            .btn-toggle-sidebar {
+                display: none;
+            }
+        }
+        .btn-toggle-sidebar {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
     <header class="header">
-        <a href="/" class="logo">🍷 AI-Sommelier</a>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button class="btn-toggle-sidebar" onclick="toggleSidebar()">☰</button>
+            <a href="/" class="logo">AI-Sommelier</a>
+        </div>
         <nav class="nav">
             <button onclick="logout()" class="btn-logout">Выйти</button>
         </nav>
     </header>
 
-    <div class="chat-container">
-        <div class="error-message" id="error-message"></div>
-
-        <div class="messages" id="messages">
-            <!-- Messages will be loaded here -->
-        </div>
-
-        <div id="loading-indicator" class="loading" style="display: none;">
-            <div class="loading-dots">
-                <span></span>
-                <span></span>
-                <span></span>
+    <div class="main-content">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="btn-new-session" id="btn-new-session" onclick="createNewSession()">
+                    <span class="btn-text">Новый диалог</span>
+                </button>
+                <h2>История</h2>
             </div>
-            AI-сомелье думает...
-        </div>
+            <div class="sidebar-sessions" id="sidebar-sessions">
+                <div class="loading-sessions">Загрузка...</div>
+            </div>
+        </aside>
 
-        <div class="input-area">
-            <input
-                type="text"
-                id="message-input"
-                class="message-input"
-                placeholder="Спросите о вине..."
-                maxlength="2000"
-            >
-            <button onclick="sendMessage()" id="send-btn" class="send-btn">Отправить</button>
+        <!-- Chat area -->
+        <div class="chat-container">
+            <div class="error-message" id="error-message"></div>
+            <div class="read-only-banner" id="read-only-banner">
+                Это архивный диалог. <a href="#" onclick="createNewSession(); return false;">Начать новый</a>
+            </div>
+
+            <div class="messages" id="messages">
+                <!-- Messages will be loaded here -->
+            </div>
+
+            <div id="loading-indicator" class="loading" style="display: none; margin-bottom: 12px;">
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                Винни думает...
+            </div>
+
+            <div class="input-area" id="input-area">
+                <input
+                    type="text"
+                    id="message-input"
+                    class="message-input"
+                    placeholder="Спросите о вине..."
+                    maxlength="2000"
+                >
+                <button onclick="sendMessage()" id="send-btn" class="send-btn">Отправить</button>
+            </div>
+            <div id="char-count" class="char-count">0 / 2000</div>
         </div>
-        <div id="char-count" class="char-count">0 / 2000</div>
     </div>
 
     <script>
@@ -229,9 +501,20 @@
         const loadingIndicator = document.getElementById('loading-indicator');
         const errorMessage = document.getElementById('error-message');
         const charCount = document.getElementById('char-count');
+        const sidebarSessions = document.getElementById('sidebar-sessions');
+        const readOnlyBanner = document.getElementById('read-only-banner');
+        const inputArea = document.getElementById('input-area');
 
-        // Load conversation on page load
-        loadConversation();
+        let currentSessionId = null;
+        let isReadOnly = false;
+
+        // Load on page load
+        init();
+
+        async function init() {
+            await loadSessions();
+            await loadCurrentSession();
+        }
 
         // Update character count
         messageInput.addEventListener('input', () => {
@@ -248,23 +531,215 @@
             }
         });
 
-        async function loadConversation() {
+        async function loadSessions() {
             try {
-                const response = await fetch('/api/v1/chat/conversation');
+                const response = await fetch('/api/v1/chat/sessions');
                 if (response.status === 401) {
                     window.location.href = '/login';
                     return;
                 }
-                if (!response.ok) throw new Error('Failed to load conversation');
+                if (!response.ok) throw new Error('Failed to load sessions');
 
                 const data = await response.json();
-                renderMessages(data.messages);
+                renderSessions(data.sessions);
+            } catch (error) {
+                sidebarSessions.innerHTML = '<div class="no-sessions">Ошибка загрузки</div>';
+            }
+        }
+
+        function renderSessions(sessions) {
+            if (!sessions || sessions.length === 0) {
+                sidebarSessions.innerHTML = '<div class="no-sessions">Нет сохранённых диалогов</div>';
+                return;
+            }
+
+            // Group sessions by date
+            const groups = { today: [], yesterday: [], older: [] };
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            sessions.forEach(session => {
+                const sessionDate = new Date(session.created_at);
+                const sessionDay = new Date(sessionDate.getFullYear(), sessionDate.getMonth(), sessionDate.getDate());
+
+                if (sessionDay.getTime() === today.getTime()) {
+                    groups.today.push(session);
+                } else if (sessionDay.getTime() === yesterday.getTime()) {
+                    groups.yesterday.push(session);
+                } else {
+                    groups.older.push(session);
+                }
+            });
+
+            let html = '';
+
+            if (groups.today.length > 0) {
+                html += renderSessionGroup('Сегодня', groups.today);
+            }
+            if (groups.yesterday.length > 0) {
+                html += renderSessionGroup('Вчера', groups.yesterday);
+            }
+            if (groups.older.length > 0) {
+                html += renderSessionGroup('Ранее', groups.older);
+            }
+
+            sidebarSessions.innerHTML = html;
+        }
+
+        function renderSessionGroup(title, sessions) {
+            let html = `<div class="session-group">
+                <div class="session-group-header">${title}</div>`;
+
+            sessions.forEach(session => {
+                const isActive = session.id === currentSessionId;
+                const title = session.title || 'Без названия';
+                const titleClass = session.title ? '' : 'untitled';
+                const time = new Date(session.updated_at).toLocaleTimeString('ru-RU', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                html += `
+                    <div class="session-item ${isActive ? 'active' : ''}" data-session-id="${session.id}">
+                        <div class="session-info" onclick="loadSession('${session.id}')">
+                            <div class="session-title ${titleClass}">${escapeHtml(title)}</div>
+                            <div class="session-meta">
+                                <span class="session-time">${time}</span>
+                                <span class="session-messages">${session.message_count} сообщ.</span>
+                            </div>
+                        </div>
+                        <button class="btn-delete-session"
+                                title="Удалить"
+                                onclick="deleteSession('${session.id}', event)">×</button>
+                    </div>`;
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        async function loadCurrentSession() {
+            try {
+                const response = await fetch('/api/v1/chat/sessions/current');
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                if (!response.ok) throw new Error('Failed to load session');
+
+                const session = await response.json();
+                currentSessionId = session.id;
+                isReadOnly = false;
+                renderMessages(session.messages, session.suggested_wines || []);
+                setReadOnlyMode(false);
+                updateActiveSession();
             } catch (error) {
                 showError('Не удалось загрузить чат. Попробуйте обновить страницу.');
             }
         }
 
+        async function loadSession(sessionId) {
+            try {
+                const response = await fetch(`/api/v1/chat/sessions/${sessionId}`);
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                if (!response.ok) throw new Error('Failed to load session');
+
+                const session = await response.json();
+                currentSessionId = session.id;
+                isReadOnly = !session.is_active;
+                renderMessages(session.messages, session.suggested_wines || []);
+                setReadOnlyMode(isReadOnly);
+                updateActiveSession();
+            } catch (error) {
+                showError('Не удалось загрузить диалог.');
+            }
+        }
+
+        function updateActiveSession() {
+            document.querySelectorAll('.session-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.sessionId === currentSessionId);
+            });
+        }
+
+        function setReadOnlyMode(readOnly) {
+            readOnlyBanner.style.display = readOnly ? 'block' : 'none';
+            messageInput.disabled = readOnly;
+            sendBtn.disabled = readOnly;
+            if (readOnly) {
+                messageInput.placeholder = 'Архивный диалог (только чтение)';
+            } else {
+                messageInput.placeholder = 'Спросите о вине...';
+            }
+        }
+
+        async function createNewSession() {
+            const btn = document.getElementById('btn-new-session');
+            const btnText = btn.querySelector('.btn-text');
+            const originalText = btnText.textContent;
+
+            // Show loading state
+            btn.disabled = true;
+            btnText.innerHTML = '<span class="spinner"></span>Создание...';
+
+            try {
+                const response = await fetch('/api/v1/chat/sessions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                if (!response.ok) throw new Error('Failed to create session');
+
+                const session = await response.json();
+                currentSessionId = session.id;
+                isReadOnly = false;
+                renderMessages(session.messages, session.suggested_wines || []);
+                setReadOnlyMode(false);
+                await loadSessions();
+            } catch (error) {
+                showError('Не удалось создать новый диалог.');
+            } finally {
+                // Restore button state
+                btn.disabled = false;
+                btnText.textContent = originalText;
+            }
+        }
+
+        async function deleteSession(sessionId, event) {
+            event.stopPropagation();
+
+            if (!confirm('Удалить этот диалог?')) return;
+
+            try {
+                const response = await fetch(`/api/v1/chat/sessions/${sessionId}`, {
+                    method: 'DELETE'
+                });
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                if (!response.ok) throw new Error('Failed to delete session');
+
+                // If we deleted the current session, load a new one
+                if (sessionId === currentSessionId) {
+                    await loadCurrentSession();
+                }
+                await loadSessions();
+            } catch (error) {
+                showError('Не удалось удалить диалог.');
+            }
+        }
+
         async function sendMessage() {
+            if (isReadOnly) return;
+
             const content = messageInput.value.trim();
             if (!content) return;
 
@@ -299,6 +774,9 @@
                 messageInput.value = '';
                 charCount.textContent = '0 / 2000';
 
+                // Refresh sessions to update title if it was auto-generated
+                await loadSessions();
+
             } catch (error) {
                 showError(error.message || 'Произошла ошибка. Попробуйте ещё раз.');
             } finally {
@@ -306,9 +784,15 @@
             }
         }
 
-        function renderMessages(messages) {
+        function renderMessages(messages, suggestedWines = []) {
             messagesContainer.innerHTML = '';
-            messages.forEach(msg => addMessage(msg));
+            messages.forEach((msg, index) => {
+                addMessage(msg);
+                // Add wine cards after first assistant message (welcome)
+                if (index === 0 && msg.role === 'assistant' && suggestedWines.length > 0) {
+                    renderWineCards(suggestedWines);
+                }
+            });
         }
 
         function addMessage(msg) {
@@ -329,6 +813,36 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
+        function renderWineCards(wines) {
+            if (!wines || wines.length === 0) return;
+
+            const container = document.createElement('div');
+            container.className = 'wine-cards';
+
+            wines.forEach(wine => {
+                const card = document.createElement('div');
+                card.className = 'wine-card';
+
+                const imageHtml = wine.image_url
+                    ? `<img class="wine-card-image" src="${escapeHtml(wine.image_url)}" alt="${escapeHtml(wine.name)}" onerror="this.outerHTML='<div class=\\'wine-card-image placeholder\\'>🍷</div>'">`
+                    : '<div class="wine-card-image placeholder">🍷</div>';
+
+                card.innerHTML = `
+                    ${imageHtml}
+                    <div class="wine-card-info">
+                        <div class="wine-card-name">${escapeHtml(wine.name)}</div>
+                        <div class="wine-card-meta">${escapeHtml(wine.country)}</div>
+                        <div class="wine-card-price">$${wine.price_usd}</div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            messagesContainer.appendChild(container);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
@@ -336,8 +850,8 @@
         }
 
         function setLoading(loading) {
-            messageInput.disabled = loading;
-            sendBtn.disabled = loading;
+            messageInput.disabled = loading || isReadOnly;
+            sendBtn.disabled = loading || isReadOnly;
             loadingIndicator.style.display = loading ? 'flex' : 'none';
         }
 
@@ -348,6 +862,10 @@
 
         function hideError() {
             errorMessage.style.display = 'none';
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
         }
 
         async function logout() {
