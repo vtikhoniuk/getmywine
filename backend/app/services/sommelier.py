@@ -21,6 +21,7 @@ from app.services.proactive_suggestions import (
 )
 from app.services.sommelier_prompts import (
     SYSTEM_PROMPT_COLD_START,
+    SYSTEM_PROMPT_CONTINUATION,
     SYSTEM_PROMPT_PERSONALIZED,
     PROMPT_PROACTIVE_COLD_START,
     PROMPT_PROACTIVE_PERSONALIZED,
@@ -392,6 +393,7 @@ class SommelierService:
         user_profile: Optional[dict] = None,
         conversation_history: Optional[list[dict]] = None,
         cross_session_context: Optional[CrossSessionContext] = None,
+        is_continuation: bool = False,
     ) -> str:
         """
         Generate AI response to user message using LLM with conversation history.
@@ -469,11 +471,16 @@ class SommelierService:
             ]
             logger.debug("Using %d messages from conversation history", len(history))
 
+        # Append continuation instruction when not the first message
+        system_prompt = prompt_data["system_prompt"]
+        if is_continuation:
+            system_prompt += SYSTEM_PROMPT_CONTINUATION
+
         # Try LLM, fallback to mock
         if self.llm_service.is_available:
             try:
                 response = await self.llm_service.generate_wine_recommendation(
-                    system_prompt=prompt_data["system_prompt"],
+                    system_prompt=system_prompt,
                     user_prompt=enhanced_prompt,
                     history=history,
                 )

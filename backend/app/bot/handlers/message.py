@@ -5,9 +5,8 @@ import logging
 from telegram import Update
 from telegram.ext import ContextTypes, MessageHandler, filters
 
-from app.bot.formatters import format_wine_photo_caption
 from app.bot.messages import ERROR_LLM_UNAVAILABLE
-from app.bot.utils import detect_language, resolve_image_url, sanitize_telegram_markdown
+from app.bot.utils import detect_language, sanitize_telegram_markdown
 from app.core.database import async_session_maker
 from app.services.telegram_bot import TelegramBotService
 
@@ -61,21 +60,6 @@ async def message_handler_callback(
                 parse_mode="Markdown",
             )
 
-            # Send wine photos individually (best-effort)
-            for wine in wines[:3]:
-                if not getattr(wine, "image_url", None):
-                    continue
-                try:
-                    url = await resolve_image_url(wine.image_url)
-                    await update.message.reply_photo(
-                        photo=url,
-                        caption=format_wine_photo_caption(wine, language),
-                    )
-                except Exception as photo_err:
-                    logger.warning(
-                        "Failed to send photo for %s: %s", wine.name, photo_err,
-                    )
-
             logger.info(
                 "Sent recommendation to user %s with %d wines",
                 telegram_id,
@@ -85,13 +69,8 @@ async def message_handler_callback(
     except Exception as e:
         logger.exception("Error handling message for user %s: %s", telegram_id, e)
 
-        # Send error message
-        error_message = (
-            ERROR_LLM_UNAVAILABLE
-            if language == "ru"
-            else "Sorry, an error occurred. Please try again."
-        )
-        await update.message.reply_text(error_message)
+        # Send error message (always Russian — service targets RU)
+        await update.message.reply_text(ERROR_LLM_UNAVAILABLE)
 
 
 # Handler instance for registration
