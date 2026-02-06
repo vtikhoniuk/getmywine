@@ -23,7 +23,7 @@ class TestFullAuthFlow:
         # Home page loads
         home_response = await client.get("/")
         assert home_response.status_code == 200
-        assert "AI-Sommelier" in home_response.text
+        assert "GetMyWine" in home_response.text
 
         # /me returns user data (what JS calls on home page)
         me_response = await client.get("/api/v1/auth/me")
@@ -58,7 +58,7 @@ class TestFullAuthFlow:
         # Home page loads
         home_response = await client.get("/")
         assert home_response.status_code == 200
-        assert "AI-Sommelier" in home_response.text
+        assert "GetMyWine" in home_response.text
 
         # /me returns user data
         me_response = await client.get("/api/v1/auth/me")
@@ -72,7 +72,7 @@ class TestFullAuthFlow:
         # Home page loads for everyone
         home_response = await client.get("/")
         assert home_response.status_code == 200
-        assert "AI-Sommelier" in home_response.text
+        assert "GetMyWine" in home_response.text
 
         # /me returns 401 for unauthenticated
         me_response = await client.get("/api/v1/auth/me")
@@ -85,4 +85,4 @@ class TestFullAuthFlow:
         for page in pages:
             response = await client.get(page)
             assert response.status_code == 200, f"Page {page} not accessible"
-            assert "AI-Sommelier" in response.text
+            assert "GetMyWine" in response.text

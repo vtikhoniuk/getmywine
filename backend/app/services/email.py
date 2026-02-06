@@ -33,7 +33,7 @@ class EmailService:
         Returns:
             True if sent successfully, False otherwise
         """
-        subject = "Сброс пароля — AI-Sommelier"
+        subject = "Сброс пароля — GetMyWine"
         body = self._build_password_reset_email(token, reset_url)
 
         return await self._send_email(email, subject, body)
@@ -44,12 +44,12 @@ class EmailService:
         <html>
         <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 8px 8px 0 0;">
-                <h1 style="color: white; margin: 0;">🍷 AI-Sommelier</h1>
+                <h1 style="color: white; margin: 0;">🍷 GetMyWine</h1>
             </div>
             <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px;">
                 <h2 style="color: #333; margin-top: 0;">Сброс пароля</h2>
                 <p style="color: #666; line-height: 1.6;">
-                    Вы запросили сброс пароля для вашего аккаунта AI-Sommelier.
+                    Вы запросили сброс пароля для вашего аккаунта GetMyWine.
                     Нажмите на кнопку ниже, чтобы установить новый пароль.
                 </p>
                 <div style="text-align: center; margin: 30px 0;">
@@ -70,7 +70,7 @@ class EmailService:
                 </p>
                 <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
                 <p style="color: #999; font-size: 12px; text-align: center;">
-                    © 2026 AI-Sommelier. Все права защищены.
+                    © 2026 GetMyWine. Все права защищены.
                 </p>
             </div>
         </body>

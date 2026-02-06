@@ -26,7 +26,7 @@ async def wines_for_search(db_session: AsyncSession) -> list[Wine]:
             "body": 5,
             "description": "A bold red wine perfect for grilled steak and red meat dishes.",
             "food_pairings": ["steak", "beef", "lamb"],
-            "price_usd": Decimal("55.00"),
+            "price_rub": Decimal("4400.00"),
             "price_range": PriceRange.MID,
         },
         {
@@ -42,7 +42,7 @@ async def wines_for_search(db_session: AsyncSession) -> list[Wine]:
             "body": 2,
             "description": "Crisp white wine ideal for fish, oysters and light seafood.",
             "food_pairings": ["fish", "oysters", "shrimp"],
-            "price_usd": Decimal("35.00"),
+            "price_rub": Decimal("2800.00"),
             "price_range": PriceRange.MID,
         },
         {
@@ -58,7 +58,7 @@ async def wines_for_search(db_session: AsyncSession) -> list[Wine]:
             "body": 3,
             "description": "A sweet dessert wine with honey and apricot notes.",
             "food_pairings": ["dessert", "fruit", "cheese"],
-            "price_usd": Decimal("45.00"),
+            "price_rub": Decimal("3600.00"),
             "price_range": PriceRange.MID,
         },
     ]
@@ -189,9 +189,9 @@ class TestFilterSearch:
         self, async_client: AsyncClient, wines_for_search: list[Wine]
     ):
         """Test filtering by price range."""
-        response = await async_client.get("/api/v1/wines?price_min=30&price_max=50")
+        response = await async_client.get("/api/v1/wines?price_min=2400&price_max=4000")
 
         assert response.status_code == 200
         data = response.json()
         for item in data["items"]:
-            assert 30 <= item["price_usd"] <= 50
+            assert 2400 <= item["price_rub"] <= 4000

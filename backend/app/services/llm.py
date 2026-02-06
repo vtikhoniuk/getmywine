@@ -1,4 +1,4 @@
-"""LLM service for AI sommelier.
+"""LLM service for GetMyWine sommelier.
 
 Supports:
 - OpenRouter (recommended) - access to multiple models via single API
@@ -104,8 +104,8 @@ class OpenRouterService(BaseLLMService):
                 messages=messages,
                 # OpenRouter-specific headers
                 extra_headers={
-                    "HTTP-Referer": "https://ai-sommelier.local",
-                    "X-Title": "AI Sommelier",
+                    "HTTP-Referer": "https://getmywine.local",
+                    "X-Title": "GetMyWine",
                 },
             )
             return response.choices[0].message.content

@@ -54,9 +54,9 @@ class WineRepository:
         if sweetness is not None:
             query = query.where(Wine.sweetness == sweetness)
         if price_min is not None:
-            query = query.where(Wine.price_usd >= price_min)
+            query = query.where(Wine.price_rub >= price_min)
         if price_max is not None:
-            query = query.where(Wine.price_usd <= price_max)
+            query = query.where(Wine.price_rub <= price_max)
         if country is not None:
             query = query.where(Wine.country == country)
         if body_min is not None:
@@ -90,9 +90,9 @@ class WineRepository:
         if sweetness is not None:
             query = query.where(Wine.sweetness == sweetness)
         if price_min is not None:
-            query = query.where(Wine.price_usd >= price_min)
+            query = query.where(Wine.price_rub >= price_min)
         if price_max is not None:
-            query = query.where(Wine.price_usd <= price_max)
+            query = query.where(Wine.price_rub <= price_max)
         if country is not None:
             query = query.where(Wine.country == country)
         if body_min is not None:
@@ -147,9 +147,9 @@ class WineRepository:
         if sweetness is not None:
             query = query.where(Wine.sweetness == sweetness)
         if price_min is not None:
-            query = query.where(Wine.price_usd >= price_min)
+            query = query.where(Wine.price_rub >= price_min)
         if price_max is not None:
-            query = query.where(Wine.price_usd <= price_max)
+            query = query.where(Wine.price_rub <= price_max)
 
         # Order by similarity (higher is better) and limit
         query = query.order_by(distance).limit(limit)

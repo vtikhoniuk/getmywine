@@ -67,27 +67,27 @@ class TestWineSeedMigration:
     async def test_price_distribution(
         self, db_session: AsyncSession, seed_wines: None
     ):
-        """T032: Price distribution (90% $50-100, 10% premium $100+).
+        """T032: Price distribution (90% 4000-8000₽, 10% premium 8000₽+).
 
-        Expected: 45 wines $50-100, 5 wines $100+
+        Expected: 45 wines 4000-8000₽, 5 wines 8000₽+
         """
-        # Count wines in $50-100 range
+        # Count wines in 4000-8000₽ range
         mid_range_result = await db_session.execute(
             select(func.count(Wine.id)).where(
-                Wine.price_usd >= 50,
-                Wine.price_usd <= 100
+                Wine.price_rub >= 4000,
+                Wine.price_rub <= 8000
             )
         )
         mid_range_count = mid_range_result.scalar()
 
-        # Count premium wines ($100+)
+        # Count premium wines (8000₽+)
         premium_result = await db_session.execute(
-            select(func.count(Wine.id)).where(Wine.price_usd > 100)
+            select(func.count(Wine.id)).where(Wine.price_rub > 8000)
         )
         premium_count = premium_result.scalar()
 
-        assert mid_range_count == 45, f"Expected 45 wines in $50-100 range, got {mid_range_count}"
-        assert premium_count == 5, f"Expected 5 premium wines ($100+), got {premium_count}"
+        assert mid_range_count == 45, f"Expected 45 wines in 4000-8000₽ range, got {mid_range_count}"
+        assert premium_count == 5, f"Expected 5 premium wines (8000₽+), got {premium_count}"
 
     async def test_all_wines_have_image_url(
         self, db_session: AsyncSession, seed_wines: None
@@ -134,7 +134,7 @@ class TestWineSeedMigration:
             assert wine.region, f"Wine {wine.id} missing region"
             assert wine.grape_varieties, f"Wine {wine.id} missing grape_varieties"
             assert wine.description, f"Wine {wine.id} missing description"
-            assert wine.price_usd > 0, f"Wine {wine.id} has invalid price"
+            assert wine.price_rub > 0, f"Wine {wine.id} has invalid price"
             assert 1 <= wine.acidity <= 5, f"Wine {wine.id} has invalid acidity"
             assert 1 <= wine.tannins <= 5, f"Wine {wine.id} has invalid tannins"
             assert 1 <= wine.body <= 5, f"Wine {wine.id} has invalid body"

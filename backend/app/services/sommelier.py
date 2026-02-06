@@ -1,4 +1,4 @@
-"""AI Sommelier service - main integration point.
+"""GetMyWine sommelier service - main integration point.
 
 Combines proactive suggestions, prompts, wine catalog, LLM, and real events
 for intelligent wine recommendations.
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 class SommelierService:
-    """Main AI Sommelier service with LLM and real events integration."""
+    """Main GetMyWine sommelier service with LLM and real events integration."""
 
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -355,7 +355,7 @@ class SommelierService:
    Вино: {wine.name}
    Регион: {wine.region}, {wine.country}{vintage}
    Сорта: {grapes}
-   Цена: ${wine.price_usd}
+   Цена: {wine.price_rub}₽
    Описание: {wine.description}
    Ноты: {wine.tasting_notes or 'N/A'}
    К блюдам: {pairings}

@@ -29,7 +29,7 @@ async def sample_wine_in_db(db_session: AsyncSession) -> Wine:
         description="A test wine for API integration tests.",
         tasting_notes="Cherry, leather, tobacco",
         food_pairings=["pasta", "pizza"],
-        price_usd=Decimal("45.00"),
+        price_rub=Decimal("3600.00"),
         price_range=PriceRange.MID,
         image_url="https://example.com/api-wine.jpg",
     )
@@ -58,7 +58,7 @@ class TestGetWineById:
         assert data["producer"] == "API Test Producer"
         assert data["wine_type"] == "red"
         assert data["country"] == "Italy"
-        assert data["price_usd"] == 45.0
+        assert data["price_rub"] == 3600.0
 
     @pytest.mark.asyncio
     async def test_get_wine_by_id_not_found(self, async_client: AsyncClient):
@@ -114,7 +114,7 @@ class TestListWines:
                 tannins=2,
                 body=3,
                 description="Wine for pagination testing purposes.",
-                price_usd=Decimal("60.00"),
+                price_rub=Decimal("4800.00"),
                 price_range=PriceRange.MID,
             )
             db_session.add(wine)
@@ -152,5 +152,5 @@ class TestListWines:
             assert "name" in item
             assert "producer" in item
             assert "wine_type" in item
-            assert "price_usd" in item
+            assert "price_rub" in item
             assert "country" in item

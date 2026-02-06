@@ -49,7 +49,7 @@ class MockAIService:
     def _get_mock_response(self, message: str) -> str:
         # Простые паттерны для демо
         if "привет" in message.lower():
-            return "Здравствуйте! Я ваш AI-сомелье..."
+            return "Здравствуйте! Я ваш GetMyWine..."
         return "Интересный вопрос! В настоящее время..."
 ```
 

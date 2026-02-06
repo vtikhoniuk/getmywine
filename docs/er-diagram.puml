@@ -68,7 +68,7 @@ entity "wines" as wines {
     * description : TEXT
     tasting_notes : TEXT
     food_pairings : VARCHAR[]
-    * price_usd : NUMERIC(10,2)
+    * price_rub : NUMERIC(10,2)
     * price_range : enum(budget,mid,premium)
     image_url : VARCHAR(500)
     embedding : VECTOR(1536)

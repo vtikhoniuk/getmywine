@@ -107,7 +107,7 @@ after_contradiction = max(current - 0.3, 0.0) (conflicting statement)
 
 **Rationale**:
 - Не прерывает пользователя отдельным модальным окном
-- Диалоговый формат соответствует концепции AI-сомелье
+- Диалоговый формат соответствует концепции GetMyWine
 - Пропуск снижает барьер входа (из spec.md US-004)
 
 **Alternatives considered**:

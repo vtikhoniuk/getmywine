@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: AI-Sommelier Sessions API
+  title: GetMyWine Sessions API
   version: 1.0.0
-  description: API для управления сессиями диалогов с AI-сомелье
+  description: API для управления сессиями диалогов с GetMyWine
 
 servers:
   - url: /api/v1

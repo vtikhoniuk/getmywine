@@ -11,8 +11,8 @@ from app.routers import auth, chat, pages, wine
 settings = get_settings()
 
 app = FastAPI(
-    title="AI-Sommelier API",
-    description="API для AI-сомелье — персональные рекомендации вин",
+    title="GetMyWine API",
+    description="API для GetMyWine — персональные рекомендации вин",
     version="0.1.0",
 )
 

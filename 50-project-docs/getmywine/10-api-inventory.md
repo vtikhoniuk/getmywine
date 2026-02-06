@@ -1,4 +1,4 @@
-# API Inventory: AI-Sommelier
+# API Inventory: GetMyWine
 
 > **Дата:** 2026-02-01
 > **Версия:** 1.0

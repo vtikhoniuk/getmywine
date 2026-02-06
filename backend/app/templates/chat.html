@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Чат с AI-сомелье</title>
+    <title>Чат с GetMyWine</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
         * {
@@ -439,7 +439,7 @@
     <header class="header">
         <div style="display: flex; align-items: center; gap: 12px;">
             <button class="btn-toggle-sidebar" onclick="toggleSidebar()">☰</button>
-            <a href="/" class="logo">AI-Sommelier</a>
+            <a href="/" class="logo">GetMyWine</a>
         </div>
         <nav class="nav">
             <button onclick="logout()" class="btn-logout">Выйти</button>
@@ -832,7 +832,7 @@
                     <div class="wine-card-info">
                         <div class="wine-card-name">${escapeHtml(wine.name)}</div>
                         <div class="wine-card-meta">${escapeHtml(wine.country)}</div>
-                        <div class="wine-card-price">$${wine.price_usd}</div>
+                        <div class="wine-card-price">${wine.price_rub}₽</div>
                     </div>
                 `;
 

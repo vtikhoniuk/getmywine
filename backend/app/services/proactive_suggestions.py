@@ -1,4 +1,4 @@
-"""Proactive suggestion engine for AI sommelier.
+"""Proactive suggestion engine for GetMyWine sommelier.
 
 Generates contextual wine suggestions based on:
 - Season and weather
@@ -362,7 +362,7 @@ def format_wine_recommendation(
     lines.append(f"{wine.region}, {wine.country}", )
     if wine.vintage_year:
         lines[-1] += f" · {wine.vintage_year}"
-    lines.append(f"~${wine.price_usd}")
+    lines.append(f"~{wine.price_rub}₽")
 
     # Grapes
     if wine.grape_varieties:

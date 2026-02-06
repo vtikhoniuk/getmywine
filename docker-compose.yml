@@ -1,18 +1,18 @@
 services:
   db:
     image: pgvector/pgvector:pg16
-    container_name: ai-sommelier-db
+    container_name: getmywine-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-ai_sommelier}
+      POSTGRES_USER: ${POSTGRES_USER:-getmywine}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      POSTGRES_DB: ${POSTGRES_DB:-ai_sommelier}
+      POSTGRES_DB: ${POSTGRES_DB:-getmywine}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ai_sommelier} -d ${POSTGRES_DB:-ai_sommelier}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-getmywine} -d ${POSTGRES_DB:-getmywine}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -21,13 +21,13 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: ai-sommelier-backend
+    container_name: getmywine-backend
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://ai_sommelier:changeme@db:5432/ai_sommelier}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://getmywine:changeme@db:5432/getmywine}
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
       JWT_EXPIRE_DAYS: ${JWT_EXPIRE_DAYS:-7}
@@ -46,6 +46,12 @@ services:
       LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.7}
       LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-2000}
       LLM_MAX_HISTORY_MESSAGES: ${LLM_MAX_HISTORY_MESSAGES:-10}
+      # Telegram Bot
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_MODE: ${TELEGRAM_MODE:-polling}
+      TELEGRAM_WEBHOOK_URL: ${TELEGRAM_WEBHOOK_URL:-}
+      ENABLE_TELEGRAM_BOT: ${ENABLE_TELEGRAM_BOT:-true}
+      TELEGRAM_SESSION_INACTIVITY_HOURS: ${TELEGRAM_SESSION_INACTIVITY_HOURS:-24}
     ports:
       - "8000:8000"
     volumes:
@@ -54,6 +60,37 @@ services:
       - ./backend/tests:/app/tests:ro
     command: >
       sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  telegram-bot:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: getmywine-telegram-bot
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://getmywine:changeme@db:5432/getmywine}
+      # LLM Configuration
+      LLM_PROVIDER: ${LLM_PROVIDER:-openrouter}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      OPENROUTER_BASE_URL: ${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-anthropic/claude-sonnet-4}
+      LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.7}
+      LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-2000}
+      LLM_MAX_HISTORY_MESSAGES: ${LLM_MAX_HISTORY_MESSAGES:-10}
+      # Telegram Bot
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_MODE: ${TELEGRAM_MODE:-polling}
+      TELEGRAM_WEBHOOK_URL: ${TELEGRAM_WEBHOOK_URL:-}
+      ENABLE_TELEGRAM_BOT: ${ENABLE_TELEGRAM_BOT:-true}
+      TELEGRAM_SESSION_INACTIVITY_HOURS: ${TELEGRAM_SESSION_INACTIVITY_HOURS:-24}
+    volumes:
+      - ./backend/app:/app/app:ro
+    command: python -m app.bot.main
 
 volumes:
   postgres_data:

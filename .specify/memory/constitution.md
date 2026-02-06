@@ -20,7 +20,7 @@ SYNC IMPACT REPORT
 ==================
 -->
 
-# Конституция AI-Sommelier
+# Конституция GetMyWine
 
 ## Принципы разработки
 

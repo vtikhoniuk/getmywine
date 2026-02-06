@@ -1,10 +1,14 @@
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+# Resolve .env from project root (one level up from backend/)
+_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
 
 class Settings(BaseSettings):
     # Database
-    database_url: str = "postgresql+asyncpg://ai_sommelier:changeme@localhost:5432/ai_sommelier"
+    database_url: str = "postgresql+asyncpg://getmywine:changeme@localhost:5432/getmywine"
 
     # JWT
     jwt_secret: str = "change-me-in-production"
@@ -57,8 +61,16 @@ class Settings(BaseSettings):
     session_inactivity_minutes: int = 30  # Auto-close session after inactivity
     session_retention_days: int = 90  # Keep sessions for this many days
 
+    # Telegram Bot
+    telegram_bot_token: str = ""  # Bot token from @BotFather
+    telegram_mode: str = "polling"  # "polling" or "webhook"
+    telegram_webhook_url: str = ""  # Required for webhook mode
+    enable_telegram_bot: bool = True  # Enable/disable bot
+    enable_web: bool = True  # Enable/disable web server
+    telegram_session_inactivity_hours: int = 24  # Session timeout for Telegram (hours)
+
     model_config = {
-        "env_file": ".env",
+        "env_file": str(_ENV_FILE),
         "env_file_encoding": "utf-8",
     }
 

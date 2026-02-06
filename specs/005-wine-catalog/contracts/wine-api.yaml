@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Wine Catalog API
-  description: API для каталога вин AI-Sommelier
+  description: API для каталога вин GetMyWine
   version: 1.0.0
 
 servers:
@@ -29,13 +29,13 @@ paths:
             $ref: '#/components/schemas/Sweetness'
         - name: price_min
           in: query
-          description: Минимальная цена (USD)
+          description: Минимальная цена (RUB)
           schema:
             type: number
             minimum: 0
         - name: price_max
           in: query
-          description: Максимальная цена (USD)
+          description: Максимальная цена (RUB)
           schema:
             type: number
             minimum: 0
@@ -174,7 +174,7 @@ components:
         - tannins
         - body
         - description
-        - price_usd
+        - price_rub
         - price_range
         - created_at
       properties:
@@ -233,7 +233,7 @@ components:
           items:
             type: string
           nullable: true
-        price_usd:
+        price_rub:
           type: number
           format: float
         price_range:
@@ -254,7 +254,7 @@ components:
         - name
         - producer
         - wine_type
-        - price_usd
+        - price_rub
         - country
       properties:
         id:
@@ -271,7 +271,7 @@ components:
           $ref: '#/components/schemas/WineType'
         sweetness:
           $ref: '#/components/schemas/Sweetness'
-        price_usd:
+        price_rub:
           type: number
         country:
           type: string

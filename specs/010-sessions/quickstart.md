@@ -16,13 +16,13 @@
 
 ```bash
 cd backend
-uv run alembic upgrade head
+alembic upgrade head
 ```
 
 ### 2. Verify Migration
 
 ```bash
-uv run alembic current
+alembic current
 # Should show: 010_sessions (head)
 
 # Check schema
@@ -34,20 +34,20 @@ docker exec -it aiwine-db psql -U postgres -d aiwine -c "\d conversations"
 
 ```bash
 # Unit tests
-uv run pytest tests/unit/test_session_naming.py -v
-uv run pytest tests/unit/test_session_lifecycle.py -v
+pytest tests/unit/test_session_naming.py -v
+pytest tests/unit/test_session_lifecycle.py -v
 
 # Integration tests
-uv run pytest tests/integration/test_sessions_api.py -v
+pytest tests/integration/test_sessions_api.py -v
 
 # All session tests
-uv run pytest -k sessions -v
+pytest -k sessions -v
 ```
 
 ### 4. Start Development Server
 
 ```bash
-uv run uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --port 8000
 ```
 
 ## Manual Testing

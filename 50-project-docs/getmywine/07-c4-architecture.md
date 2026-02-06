@@ -1,4 +1,4 @@
-# C4 Архитектура: AI-Sommelier
+# C4 Архитектура: GetMyWine
 
 > **Дата:** 2026-02-01
 > **Версия:** 1.0
@@ -11,7 +11,7 @@
 flowchart TB
     User[("👤 Пользователь")]
 
-    subgraph System["AI-Sommelier"]
+    subgraph System["GetMyWine"]
         App["🍷 Веб-приложение"]
     end
 
@@ -33,7 +33,7 @@ flowchart TB
 flowchart TB
     User[("👤 Пользователь")]
 
-    subgraph System["AI-Sommelier"]
+    subgraph System["GetMyWine"]
         Frontend["📄 Frontend\n(HTMX + JS)"]
         Backend["⚙️ Backend API\n(FastAPI)"]
         DB[("🗄️ Database\n(PostgreSQL + pgvector)")]
@@ -146,7 +146,7 @@ flowchart LR
 
 **Структура на VPS:**
 ```
-/opt/ai-sommelier/
+/opt/getmywine/
 ├── app/
 │   ├── main.py
 │   ├── routers/

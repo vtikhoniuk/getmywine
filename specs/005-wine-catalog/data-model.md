@@ -29,7 +29,7 @@
 │ description     : TEXT          [NOT NULL]                  │
 │ tasting_notes   : TEXT          [NULL]                      │
 │ food_pairings   : VARCHAR[]     [NULL, array]               │
-│ price_usd       : DECIMAL(10,2) [NOT NULL]                  │
+│ price_rub       : DECIMAL(10,2) [NOT NULL]                  │
 │ price_range     : price_range   [NOT NULL, enum]            │
 │ image_url       : VARCHAR(500)  [NULL]                      │
 │ embedding       : VECTOR(1536)  [NULL, pgvector]            │
@@ -66,9 +66,9 @@ CREATE TYPE sweetness AS ENUM (
 
 ```sql
 CREATE TYPE price_range AS ENUM (
-    'budget',   -- < $30
-    'mid',      -- $30-100
-    'premium'   -- > $100
+    'budget',   -- < 2400₽
+    'mid',      -- 2400₽-8000₽
+    'premium'   -- > 8000₽
 );
 ```
 
@@ -79,7 +79,7 @@ CREATE TYPE price_range AS ENUM (
 | wines_pkey | PRIMARY | id | Уникальный идентификатор |
 | ix_wines_name | BTREE | name | Поиск по названию |
 | ix_wines_wine_type | BTREE | wine_type | Фильтр по типу |
-| ix_wines_price_usd | BTREE | price_usd | Сортировка/фильтр по цене |
+| ix_wines_price_rub | BTREE | price_rub | Сортировка/фильтр по цене |
 | ix_wines_country | BTREE | country | Фильтр по стране |
 | ix_wines_embedding | HNSW | embedding | Семантический поиск |
 
@@ -91,7 +91,7 @@ CREATE TYPE price_range AS ENUM (
 | ck_wines_acidity | CHECK | acidity >= 1 AND acidity <= 5 |
 | ck_wines_tannins | CHECK | tannins >= 1 AND tannins <= 5 |
 | ck_wines_body | CHECK | body >= 1 AND body <= 5 |
-| ck_wines_price_usd | CHECK | price_usd > 0 |
+| ck_wines_price_rub | CHECK | price_rub > 0 |
 
 ## Relationships
 
@@ -133,7 +133,7 @@ CREATE TYPE price_range AS ENUM (
 - Required
 - 10-2000 characters
 
-### Price USD
+### Price RUB
 - Required
 - Positive decimal
 - Max 2 decimal places
@@ -170,7 +170,7 @@ CREATE TABLE wines (
     description TEXT NOT NULL,
     tasting_notes TEXT,
     food_pairings VARCHAR[],
-    price_usd DECIMAL(10,2) NOT NULL,
+    price_rub DECIMAL(10,2) NOT NULL,
     price_range price_range NOT NULL,
     image_url VARCHAR(500),
     embedding vector(1536),
@@ -182,12 +182,12 @@ CREATE TABLE wines (
     CONSTRAINT ck_wines_acidity CHECK (acidity >= 1 AND acidity <= 5),
     CONSTRAINT ck_wines_tannins CHECK (tannins >= 1 AND tannins <= 5),
     CONSTRAINT ck_wines_body CHECK (body >= 1 AND body <= 5),
-    CONSTRAINT ck_wines_price_usd CHECK (price_usd > 0)
+    CONSTRAINT ck_wines_price_rub CHECK (price_rub > 0)
 );
 
 CREATE INDEX ix_wines_name ON wines(name);
 CREATE INDEX ix_wines_wine_type ON wines(wine_type);
-CREATE INDEX ix_wines_price_usd ON wines(price_usd);
+CREATE INDEX ix_wines_price_rub ON wines(price_rub);
 CREATE INDEX ix_wines_country ON wines(country);
 CREATE INDEX ix_wines_embedding ON wines
     USING hnsw (embedding vector_cosine_ops)

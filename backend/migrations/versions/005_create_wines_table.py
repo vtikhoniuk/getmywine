@@ -75,7 +75,7 @@ def upgrade() -> None:
         sa.Column("description", sa.Text(), nullable=False),
         sa.Column("tasting_notes", sa.Text(), nullable=True),
         sa.Column("food_pairings", sa.ARRAY(sa.String(100)), nullable=True),
-        sa.Column("price_usd", sa.Numeric(10, 2), nullable=False),
+        sa.Column("price_rub", sa.Numeric(10, 2), nullable=False),
         sa.Column(
             "price_range",
             postgresql.ENUM("budget", "mid", "premium", name="price_range", create_type=False),
@@ -103,13 +103,13 @@ def upgrade() -> None:
         sa.CheckConstraint("acidity >= 1 AND acidity <= 5", name="ck_wines_acidity"),
         sa.CheckConstraint("tannins >= 1 AND tannins <= 5", name="ck_wines_tannins"),
         sa.CheckConstraint("body >= 1 AND body <= 5", name="ck_wines_body"),
-        sa.CheckConstraint("price_usd > 0", name="ck_wines_price_usd"),
+        sa.CheckConstraint("price_rub > 0", name="ck_wines_price_rub"),
     )
 
     # Create indexes
     op.create_index("ix_wines_name", "wines", ["name"])
     op.create_index("ix_wines_wine_type", "wines", ["wine_type"])
-    op.create_index("ix_wines_price_usd", "wines", ["price_usd"])
+    op.create_index("ix_wines_price_rub", "wines", ["price_rub"])
     op.create_index("ix_wines_country", "wines", ["country"])
 
     # Create HNSW index for vector similarity search
@@ -123,7 +123,7 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_index("ix_wines_embedding", table_name="wines")
     op.drop_index("ix_wines_country", table_name="wines")
-    op.drop_index("ix_wines_price_usd", table_name="wines")
+    op.drop_index("ix_wines_price_rub", table_name="wines")
     op.drop_index("ix_wines_wine_type", table_name="wines")
     op.drop_index("ix_wines_name", table_name="wines")
     op.drop_table("wines")

@@ -7,7 +7,11 @@
       "country": "France",
       "region": "Bordeaux",
       "appellation": "Pauillac",
-      "grape_varieties": ["Cabernet Sauvignon", "Merlot", "Cabernet Franc"],
+      "grape_varieties": [
+        "Cabernet Sauvignon",
+        "Merlot",
+        "Cabernet Franc"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 3,
@@ -15,10 +19,14 @@
       "body": 5,
       "description": "Биодинамическое вино с глубоким рубиновым цветом. Ароматы чёрной смородины, графита и кедра переплетаются с нотами специй. Шелковистые танины и долгое минеральное послевкусие.",
       "tasting_notes": "Чёрная смородина, графит, кедр, специи",
-      "food_pairings": ["стейк рибай", "баранина", "выдержанные сыры"],
-      "price_usd": 150.00,
+      "food_pairings": [
+        "стейк рибай",
+        "баранина",
+        "выдержанные сыры"
+      ],
       "price_range": "premium",
-      "image_url": "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400"
+      "image_url": "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400",
+      "price_rub": 12000.0
     },
     {
       "name": "Tignanello 2020",
@@ -27,7 +35,11 @@
       "country": "Italy",
       "region": "Tuscany",
       "appellation": "Toscana IGT",
-      "grape_varieties": ["Sangiovese", "Cabernet Sauvignon", "Cabernet Franc"],
+      "grape_varieties": [
+        "Sangiovese",
+        "Cabernet Sauvignon",
+        "Cabernet Franc"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 4,
@@ -35,10 +47,14 @@
       "body": 4,
       "description": "Легендарное супертосканское вино. Интенсивные ароматы вишни, сливы и фиалки с нюансами табака и пряностей. Элегантная структура и продолжительное послевкусие.",
       "tasting_notes": "Вишня, слива, фиалка, табак",
-      "food_pairings": ["паста с мясным рагу", "флорентийский стейк", "пармезан"],
-      "price_usd": 120.00,
+      "food_pairings": [
+        "паста с мясным рагу",
+        "флорентийский стейк",
+        "пармезан"
+      ],
       "price_range": "premium",
-      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Tignanello_-_bottle.jpg?width=400"
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/Tignanello_-_bottle.jpg/500px-Tignanello_-_bottle.jpg",
+      "price_rub": 9600.0
     },
     {
       "name": "Penfolds Bin 389 2021",
@@ -47,7 +63,10 @@
       "country": "Australia",
       "region": "South Australia",
       "appellation": null,
-      "grape_varieties": ["Cabernet Sauvignon", "Shiraz"],
+      "grape_varieties": [
+        "Cabernet Sauvignon",
+        "Shiraz"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 3,
@@ -55,10 +74,14 @@
       "body": 5,
       "description": "Культовый австралийский бленд, известный как 'Baby Grange'. Насыщенные ароматы ежевики, шоколада и ванили с нотами дуба и специй.",
       "tasting_notes": "Ежевика, шоколад, ваниль, дуб",
-      "food_pairings": ["барбекю", "говяжья грудинка", "выдержанный чеддер"],
-      "price_usd": 85.00,
+      "food_pairings": [
+        "барбекю",
+        "говяжья грудинка",
+        "выдержанный чеддер"
+      ],
       "price_range": "mid",
-      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/PenfoldsGrange.jpg?width=400"
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/PenfoldsGrange.jpg/500px-PenfoldsGrange.jpg",
+      "price_rub": 6800.0
     },
     {
       "name": "Caymus Vineyards Cabernet Sauvignon 2021",
@@ -67,7 +90,9 @@
       "country": "USA",
       "region": "California",
       "appellation": "Napa Valley",
-      "grape_varieties": ["Cabernet Sauvignon"],
+      "grape_varieties": [
+        "Cabernet Sauvignon"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 3,
@@ -75,10 +100,14 @@
       "body": 5,
       "description": "Иконическое калифорнийское Каберне с бархатистой текстурой. Ароматы спелой черешни, какао и ванили с мягкими, округлыми танинами.",
       "tasting_notes": "Черешня, какао, ваниль, кофе",
-      "food_pairings": ["стейк на гриле", "рёбрышки", "грибы"],
-      "price_usd": 95.00,
+      "food_pairings": [
+        "стейк на гриле",
+        "рёбрышки",
+        "грибы"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=400"
+      "image_url": "https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=400",
+      "price_rub": 7600.0
     },
     {
       "name": "Catena Zapata Malbec Argentino 2020",
@@ -87,7 +116,9 @@
       "country": "Argentina",
       "region": "Mendoza",
       "appellation": "Altamira",
-      "grape_varieties": ["Malbec"],
+      "grape_varieties": [
+        "Malbec"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 3,
@@ -95,10 +126,14 @@
       "body": 5,
       "description": "Эталонный аргентинский Мальбек с высокогорных виноградников. Глубокий фиолетовый цвет, ароматы черники, ежевики и фиалки с нотами специй и минералов.",
       "tasting_notes": "Черника, ежевика, фиалка, специи",
-      "food_pairings": ["асадо", "эмпанадас", "чимичурри"],
-      "price_usd": 75.00,
+      "food_pairings": [
+        "асадо",
+        "эмпанадас",
+        "чимичурри"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1568213816046-0a2f3a0c9d9e?w=400"
+      "image_url": "https://images.unsplash.com/photo-1568213816046-0a2f3a0c9d9e?w=400",
+      "price_rub": 6000.0
     },
     {
       "name": "Château Lynch-Bages 2019",
@@ -107,7 +142,11 @@
       "country": "France",
       "region": "Bordeaux",
       "appellation": "Pauillac",
-      "grape_varieties": ["Cabernet Sauvignon", "Merlot", "Cabernet Franc"],
+      "grape_varieties": [
+        "Cabernet Sauvignon",
+        "Merlot",
+        "Cabernet Franc"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 3,
@@ -115,10 +154,14 @@
       "body": 5,
       "description": "Классический Пойяк с выразительным характером. Ароматы чёрной смородины, мяты и карандашной стружки. Структурные танины и длительное послевкусие.",
       "tasting_notes": "Смородина, мята, кедр, карандаш",
-      "food_pairings": ["каре ягнёнка", "утка", "трюфели"],
-      "price_usd": 95.00,
+      "food_pairings": [
+        "каре ягнёнка",
+        "утка",
+        "трюфели"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=400"
+      "image_url": "https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=400",
+      "price_rub": 7600.0
     },
     {
       "name": "Brunello di Montalcino Casanova di Neri 2018",
@@ -127,7 +170,9 @@
       "country": "Italy",
       "region": "Tuscany",
       "appellation": "Brunello di Montalcino DOCG",
-      "grape_varieties": ["Sangiovese"],
+      "grape_varieties": [
+        "Sangiovese"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 4,
@@ -135,10 +180,14 @@
       "body": 4,
       "description": "Элегантное Брунелло с классическим профилем. Ароматы вишни, сушёных трав и кожи. Яркая кислотность и шелковистые танины.",
       "tasting_notes": "Вишня, травы, кожа, специи",
-      "food_pairings": ["дикий кабан", "трюфельная паста", "пекорино"],
-      "price_usd": 85.00,
+      "food_pairings": [
+        "дикий кабан",
+        "трюфельная паста",
+        "пекорино"
+      ],
       "price_range": "mid",
-      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Glass_%26_bottle_of_Brunello_di_Montalcino.jpg?width=400"
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Glass_%26_bottle_of_Brunello_di_Montalcino.jpg/500px-Glass_%26_bottle_of_Brunello_di_Montalcino.jpg",
+      "price_rub": 6800.0
     },
     {
       "name": "Vega Sicilia Valbuena 5° 2018",
@@ -147,7 +196,10 @@
       "country": "Spain",
       "region": "Castilla y León",
       "appellation": "Ribera del Duero",
-      "grape_varieties": ["Tempranillo", "Merlot"],
+      "grape_varieties": [
+        "Tempranillo",
+        "Merlot"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 3,
@@ -155,10 +207,14 @@
       "body": 5,
       "description": "Престижное испанское вино с пяти лет выдержки. Сложные ароматы спелых ягод, лакрицы и бальзамических нот. Элегантное и сбалансированное.",
       "tasting_notes": "Ягоды, лакрица, бальзам, дуб",
-      "food_pairings": ["ягнёнок", "хамон", "манчего"],
-      "price_usd": 95.00,
+      "food_pairings": [
+        "ягнёнок",
+        "хамон",
+        "манчего"
+      ],
       "price_range": "mid",
-      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Cata_preparada_de_vinos_Vega_Sicilia.jpg?width=400"
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Cata_preparada_de_vinos_Vega_Sicilia.jpg/500px-Cata_preparada_de_vinos_Vega_Sicilia.jpg",
+      "price_rub": 7600.0
     },
     {
       "name": "Henschke Hill of Grace 2018",
@@ -167,7 +223,9 @@
       "country": "Australia",
       "region": "Eden Valley",
       "appellation": null,
-      "grape_varieties": ["Shiraz"],
+      "grape_varieties": [
+        "Shiraz"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 3,
@@ -175,10 +233,14 @@
       "body": 5,
       "description": "Легендарный австралийский Шираз со старых лоз. Глубокие ароматы ежевики, лаванды и перца с нотами шоколада и землистыми оттенками.",
       "tasting_notes": "Ежевика, лаванда, перец, шоколад",
-      "food_pairings": ["баранья нога", "дичь", "сыры с голубой плесенью"],
-      "price_usd": 90.00,
+      "food_pairings": [
+        "баранья нога",
+        "дичь",
+        "сыры с голубой плесенью"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400"
+      "image_url": "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400",
+      "price_rub": 7200.0
     },
     {
       "name": "Opus One 2019",
@@ -187,7 +249,13 @@
       "country": "USA",
       "region": "California",
       "appellation": "Napa Valley",
-      "grape_varieties": ["Cabernet Sauvignon", "Merlot", "Cabernet Franc", "Petit Verdot", "Malbec"],
+      "grape_varieties": [
+        "Cabernet Sauvignon",
+        "Merlot",
+        "Cabernet Franc",
+        "Petit Verdot",
+        "Malbec"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 3,
@@ -195,10 +263,14 @@
       "body": 5,
       "description": "Иконическое партнёрство Мондави и Ротшильда. Сложные ароматы ежевики, фиалки и табака с нюансами какао и специй. Безупречный баланс.",
       "tasting_notes": "Ежевика, фиалка, табак, какао",
-      "food_pairings": ["говяжья вырезка", "фуа-гра", "трюфели"],
-      "price_usd": 85.00,
+      "food_pairings": [
+        "говяжья вырезка",
+        "фуа-гра",
+        "трюфели"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=400"
+      "image_url": "https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=400",
+      "price_rub": 6800.0
     },
     {
       "name": "Château Cos d'Estournel 2018",
@@ -207,7 +279,10 @@
       "country": "France",
       "region": "Bordeaux",
       "appellation": "Saint-Estèphe",
-      "grape_varieties": ["Cabernet Sauvignon", "Merlot"],
+      "grape_varieties": [
+        "Cabernet Sauvignon",
+        "Merlot"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 3,
@@ -215,10 +290,14 @@
       "body": 5,
       "description": "Экзотический Сент-Эстеф с восточными мотивами. Ароматы чёрных фруктов, специй и лакрицы с кремовой текстурой и долгим финишем.",
       "tasting_notes": "Чёрные фрукты, специи, лакрица, кремовость",
-      "food_pairings": ["дичь", "пекинская утка", "выдержанные сыры"],
-      "price_usd": 95.00,
+      "food_pairings": [
+        "дичь",
+        "пекинская утка",
+        "выдержанные сыры"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=400"
+      "image_url": "https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=400",
+      "price_rub": 7600.0
     },
     {
       "name": "Barolo Monfortino Giacomo Conterno 2016",
@@ -227,7 +306,9 @@
       "country": "Italy",
       "region": "Piedmont",
       "appellation": "Barolo DOCG",
-      "grape_varieties": ["Nebbiolo"],
+      "grape_varieties": [
+        "Nebbiolo"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 4,
@@ -235,10 +316,14 @@
       "body": 4,
       "description": "Король итальянских вин. Ароматы розы, смолы и вишни с нотами трюфеля и табака. Мощные танины и исключительный потенциал хранения.",
       "tasting_notes": "Роза, смола, вишня, трюфель",
-      "food_pairings": ["брасато", "ризотто с трюфелями", "выдержанные сыры"],
-      "price_usd": 95.00,
+      "food_pairings": [
+        "брасато",
+        "ризотто с трюфелями",
+        "выдержанные сыры"
+      ],
       "price_range": "mid",
-      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Barolo_1930_-_bottle.jpg?width=400"
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Barolo_1930_-_bottle.jpg/500px-Barolo_1930_-_bottle.jpg",
+      "price_rub": 7600.0
     },
     {
       "name": "Pesquera Reserva 2018",
@@ -247,7 +332,9 @@
       "country": "Spain",
       "region": "Castilla y León",
       "appellation": "Ribera del Duero",
-      "grape_varieties": ["Tempranillo"],
+      "grape_varieties": [
+        "Tempranillo"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 3,
@@ -255,10 +342,14 @@
       "body": 4,
       "description": "Классическая Рибера дель Дуэро с 24 месяцами выдержки в дубе. Ароматы спелых ягод, ванили и специй с бархатистыми танинами.",
       "tasting_notes": "Ягоды, ваниль, специи, табак",
-      "food_pairings": ["кордеро асадо", "чоризо", "выдержанные сыры"],
-      "price_usd": 55.00,
+      "food_pairings": [
+        "кордеро асадо",
+        "чоризо",
+        "выдержанные сыры"
+      ],
       "price_range": "mid",
-      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Ribera_Del_Duero_Pesquera.JPG?width=400"
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Ribera_Del_Duero_Pesquera.JPG/500px-Ribera_Del_Duero_Pesquera.JPG",
+      "price_rub": 4400.0
     },
     {
       "name": "Clos Apalta 2019",
@@ -267,7 +358,11 @@
       "country": "Chile",
       "region": "Colchagua Valley",
       "appellation": "Apalta",
-      "grape_varieties": ["Carmenere", "Cabernet Sauvignon", "Merlot"],
+      "grape_varieties": [
+        "Carmenere",
+        "Cabernet Sauvignon",
+        "Merlot"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 3,
@@ -275,10 +370,14 @@
       "body": 5,
       "description": "Культовое чилийское вино с биодинамическим подходом. Глубокие ароматы чёрных фруктов, шоколада и специй с шелковистыми танинами.",
       "tasting_notes": "Чёрные фрукты, шоколад, специи, мята",
-      "food_pairings": ["говядина на гриле", "эмпанадас", "грибы"],
-      "price_usd": 80.00,
+      "food_pairings": [
+        "говядина на гриле",
+        "эмпанадас",
+        "грибы"
+      ],
       "price_range": "mid",
-      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Carmenere_from_Chile.jpg?width=400"
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Carmenere_from_Chile.jpg/500px-Carmenere_from_Chile.jpg",
+      "price_rub": 6400.0
     },
     {
       "name": "Sassicaia 2020",
@@ -287,7 +386,10 @@
       "country": "Italy",
       "region": "Tuscany",
       "appellation": "Bolgheri Sassicaia DOC",
-      "grape_varieties": ["Cabernet Sauvignon", "Cabernet Franc"],
+      "grape_varieties": [
+        "Cabernet Sauvignon",
+        "Cabernet Franc"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 4,
@@ -295,10 +397,14 @@
       "body": 4,
       "description": "Первое и самое известное супертосканское вино. Элегантные ароматы смородины, мяты и кедра с изысканными танинами.",
       "tasting_notes": "Смородина, мята, кедр, графит",
-      "food_pairings": ["бистекка алла фьорентина", "дичь", "трюфели"],
-      "price_usd": 95.00,
+      "food_pairings": [
+        "бистекка алла фьорентина",
+        "дичь",
+        "трюфели"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=400"
+      "image_url": "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=400",
+      "price_rub": 7600.0
     },
     {
       "name": "Château Montrose 2018",
@@ -307,7 +413,11 @@
       "country": "France",
       "region": "Bordeaux",
       "appellation": "Saint-Estèphe",
-      "grape_varieties": ["Cabernet Sauvignon", "Merlot", "Cabernet Franc"],
+      "grape_varieties": [
+        "Cabernet Sauvignon",
+        "Merlot",
+        "Cabernet Franc"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 3,
@@ -315,10 +425,14 @@
       "body": 5,
       "description": "Мощный Сент-Эстеф с выраженным характером. Ароматы ежевики, фиалки и минералов с крепкими, но зрелыми танинами.",
       "tasting_notes": "Ежевика, фиалка, минералы, дуб",
-      "food_pairings": ["говяжьи рёбра", "баранина", "сыры бри"],
-      "price_usd": 90.00,
+      "food_pairings": [
+        "говяжьи рёбра",
+        "баранина",
+        "сыры бри"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=400"
+      "image_url": "https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=400",
+      "price_rub": 7200.0
     },
     {
       "name": "Amarone della Valpolicella Bertani 2015",
@@ -327,7 +441,11 @@
       "country": "Italy",
       "region": "Veneto",
       "appellation": "Amarone della Valpolicella DOCG",
-      "grape_varieties": ["Corvina", "Rondinella", "Molinara"],
+      "grape_varieties": [
+        "Corvina",
+        "Rondinella",
+        "Molinara"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 3,
@@ -335,10 +453,14 @@
       "body": 5,
       "description": "Исторический Амароне, производимый с 1857 года. Насыщенные ароматы сухофруктов, шоколада и специй с бархатистой текстурой.",
       "tasting_notes": "Сухофрукты, шоколад, специи, табак",
-      "food_pairings": ["ризотто аль амароне", "дичь", "выдержанные сыры"],
-      "price_usd": 85.00,
+      "food_pairings": [
+        "ризотто аль амароне",
+        "дичь",
+        "выдержанные сыры"
+      ],
       "price_range": "mid",
-      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/A_bottle_of_Amarone_della_Valpolicella.jpg?width=400"
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/A_bottle_of_Amarone_della_Valpolicella.jpg/500px-A_bottle_of_Amarone_della_Valpolicella.jpg",
+      "price_rub": 6800.0
     },
     {
       "name": "Muga Reserva Selección Especial 2019",
@@ -347,7 +469,11 @@
       "country": "Spain",
       "region": "La Rioja",
       "appellation": "Rioja DOCa",
-      "grape_varieties": ["Tempranillo", "Graciano", "Mazuelo"],
+      "grape_varieties": [
+        "Tempranillo",
+        "Graciano",
+        "Mazuelo"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 3,
@@ -355,10 +481,14 @@
       "body": 4,
       "description": "Классическая Риоха с традиционным подходом. Ароматы вишни, ванили и кокоса с элегантными танинами и долгим послевкусием.",
       "tasting_notes": "Вишня, ваниль, кокос, табак",
-      "food_pairings": ["ягнёнок", "паэлья", "хамон"],
-      "price_usd": 55.00,
+      "food_pairings": [
+        "ягнёнок",
+        "паэлья",
+        "хамон"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=400"
+      "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=400",
+      "price_rub": 4400.0
     },
     {
       "name": "Norton Privada 2020",
@@ -367,7 +497,11 @@
       "country": "Argentina",
       "region": "Mendoza",
       "appellation": "Luján de Cuyo",
-      "grape_varieties": ["Malbec", "Merlot", "Cabernet Sauvignon"],
+      "grape_varieties": [
+        "Malbec",
+        "Merlot",
+        "Cabernet Sauvignon"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 3,
@@ -375,10 +509,14 @@
       "body": 4,
       "description": "Премиальный аргентинский бленд. Ароматы спелых ягод, специй и шоколада с элегантной структурой и бархатистыми танинами.",
       "tasting_notes": "Ягоды, специи, шоколад, ваниль",
-      "food_pairings": ["асадо", "эмпанадас", "выдержанные сыры"],
-      "price_usd": 65.00,
+      "food_pairings": [
+        "асадо",
+        "эмпанадас",
+        "выдержанные сыры"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1568213816046-0a2f3a0c9d9e?w=400"
+      "image_url": "https://images.unsplash.com/photo-1568213816046-0a2f3a0c9d9e?w=400",
+      "price_rub": 5200.0
     },
     {
       "name": "Château Ducru-Beaucaillou 2018",
@@ -387,7 +525,10 @@
       "country": "France",
       "region": "Bordeaux",
       "appellation": "Saint-Julien",
-      "grape_varieties": ["Cabernet Sauvignon", "Merlot"],
+      "grape_varieties": [
+        "Cabernet Sauvignon",
+        "Merlot"
+      ],
       "wine_type": "red",
       "sweetness": "dry",
       "acidity": 3,
@@ -395,10 +536,14 @@
       "body": 4,
       "description": "Изысканный Сен-Жюльен с идеальным балансом. Ароматы чёрной смородины, фиалки и графита с шелковистыми танинами.",
       "tasting_notes": "Смородина, фиалка, графит, кедр",
-      "food_pairings": ["каре ягнёнка", "утка", "грибы"],
-      "price_usd": 95.00,
+      "food_pairings": [
+        "каре ягнёнка",
+        "утка",
+        "грибы"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=400"
+      "image_url": "https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=400",
+      "price_rub": 7600.0
     },
     {
       "name": "Chablis Grand Cru Les Clos William Fèvre 2021",
@@ -407,7 +552,9 @@
       "country": "France",
       "region": "Burgundy",
       "appellation": "Chablis Grand Cru",
-      "grape_varieties": ["Chardonnay"],
+      "grape_varieties": [
+        "Chardonnay"
+      ],
       "wine_type": "white",
       "sweetness": "dry",
       "acidity": 5,
@@ -415,10 +562,14 @@
       "body": 3,
       "description": "Великолепное Гран Крю Шабли с выраженной минеральностью. Ароматы цитрусовых, белых цветов и йода с кремовой текстурой.",
       "tasting_notes": "Цитрус, минералы, йод, белые цветы",
-      "food_pairings": ["устрицы", "морские гребешки", "белая рыба"],
-      "price_usd": 95.00,
+      "food_pairings": [
+        "устрицы",
+        "морские гребешки",
+        "белая рыба"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1566995541428-f2246c17cda1?w=400"
+      "image_url": "https://images.unsplash.com/photo-1566995541428-f2246c17cda1?w=400",
+      "price_rub": 7600.0
     },
     {
       "name": "Puligny-Montrachet 1er Cru Leflaive 2020",
@@ -427,7 +578,9 @@
       "country": "France",
       "region": "Burgundy",
       "appellation": "Puligny-Montrachet",
-      "grape_varieties": ["Chardonnay"],
+      "grape_varieties": [
+        "Chardonnay"
+      ],
       "wine_type": "white",
       "sweetness": "dry",
       "acidity": 4,
@@ -435,10 +588,14 @@
       "body": 3,
       "description": "Эталонное бургундское Шардоне биодинамического производства. Ароматы лимона, миндаля и белых цветов с элегантной минеральностью.",
       "tasting_notes": "Лимон, миндаль, белые цветы, минералы",
-      "food_pairings": ["лобстер", "белая рыба под соусом", "мягкие сыры"],
-      "price_usd": 150.00,
+      "food_pairings": [
+        "лобстер",
+        "белая рыба под соусом",
+        "мягкие сыры"
+      ],
       "price_range": "premium",
-      "image_url": "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=400"
+      "image_url": "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=400",
+      "price_rub": 12000.0
     },
     {
       "name": "Cloudy Bay Sauvignon Blanc 2023",
@@ -447,7 +604,9 @@
       "country": "New Zealand",
       "region": "Marlborough",
       "appellation": null,
-      "grape_varieties": ["Sauvignon Blanc"],
+      "grape_varieties": [
+        "Sauvignon Blanc"
+      ],
       "wine_type": "white",
       "sweetness": "dry",
       "acidity": 4,
@@ -455,10 +614,14 @@
       "body": 2,
       "description": "Иконический новозеландский Совиньон Блан. Яркие ароматы грейпфрута, крыжовника и свежескошенной травы с освежающей кислотностью.",
       "tasting_notes": "Грейпфрут, крыжовник, трава, маракуйя",
-      "food_pairings": ["морепродукты", "салаты", "козий сыр"],
-      "price_usd": 55.00,
+      "food_pairings": [
+        "морепродукты",
+        "салаты",
+        "козий сыр"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1566995541428-f2246c17cda1?w=400"
+      "image_url": "https://images.unsplash.com/photo-1566995541428-f2246c17cda1?w=400",
+      "price_rub": 4400.0
     },
     {
       "name": "Condrieu E. Guigal 2022",
@@ -467,7 +630,9 @@
       "country": "France",
       "region": "Rhône Valley",
       "appellation": "Condrieu",
-      "grape_varieties": ["Viognier"],
+      "grape_varieties": [
+        "Viognier"
+      ],
       "wine_type": "white",
       "sweetness": "dry",
       "acidity": 3,
@@ -475,10 +640,14 @@
       "body": 4,
       "description": "Роскошный Вионье из северной Роны. Экзотические ароматы абрикоса, персика и жасмина с кремовой текстурой и долгим финишем.",
       "tasting_notes": "Абрикос, персик, жасмин, мёд",
-      "food_pairings": ["фуа-гра", "азиатская кухня", "мягкие сыры"],
-      "price_usd": 75.00,
+      "food_pairings": [
+        "фуа-гра",
+        "азиатская кухня",
+        "мягкие сыры"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=400"
+      "image_url": "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=400",
+      "price_rub": 6000.0
     },
     {
       "name": "Gaja Gaia & Rey 2021",
@@ -487,7 +656,9 @@
       "country": "Italy",
       "region": "Piedmont",
       "appellation": "Langhe DOC",
-      "grape_varieties": ["Chardonnay"],
+      "grape_varieties": [
+        "Chardonnay"
+      ],
       "wine_type": "white",
       "sweetness": "dry",
       "acidity": 4,
@@ -495,10 +666,14 @@
       "body": 4,
       "description": "Культовое итальянское Шардоне. Сложные ароматы тропических фруктов, ванили и тостов с минеральным характером и долгим послевкусием.",
       "tasting_notes": "Тропические фрукты, ваниль, тост, минералы",
-      "food_pairings": ["ризотто с морепродуктами", "белый трюфель", "лобстер"],
-      "price_usd": 95.00,
+      "food_pairings": [
+        "ризотто с морепродуктами",
+        "белый трюфель",
+        "лобстер"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1566995541428-f2246c17cda1?w=400"
+      "image_url": "https://images.unsplash.com/photo-1566995541428-f2246c17cda1?w=400",
+      "price_rub": 7600.0
     },
     {
       "name": "Trimbach Riesling Clos Sainte Hune 2019",
@@ -507,7 +682,9 @@
       "country": "France",
       "region": "Alsace",
       "appellation": "Alsace Grand Cru",
-      "grape_varieties": ["Riesling"],
+      "grape_varieties": [
+        "Riesling"
+      ],
       "wine_type": "white",
       "sweetness": "dry",
       "acidity": 5,
@@ -515,10 +692,14 @@
       "body": 3,
       "description": "Легендарный эльзасский Рислинг. Ароматы лимона, нефтяных тонов и белого персика с выраженной минеральностью и длительным послевкусием.",
       "tasting_notes": "Лимон, нефть, персик, минералы",
-      "food_pairings": ["шукрут", "морепродукты", "азиатская кухня"],
-      "price_usd": 85.00,
+      "food_pairings": [
+        "шукрут",
+        "морепродукты",
+        "азиатская кухня"
+      ],
       "price_range": "mid",
-      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/2009_Trimbach_Riesling_(8130797570).jpg?width=400"
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/2009_Trimbach_Riesling_%288130797570%29.jpg/500px-2009_Trimbach_Riesling_%288130797570%29.jpg",
+      "price_rub": 6800.0
     },
     {
       "name": "Dog Point Sauvignon Blanc Section 94 2022",
@@ -527,7 +708,9 @@
       "country": "New Zealand",
       "region": "Marlborough",
       "appellation": null,
-      "grape_varieties": ["Sauvignon Blanc"],
+      "grape_varieties": [
+        "Sauvignon Blanc"
+      ],
       "wine_type": "white",
       "sweetness": "dry",
       "acidity": 4,
@@ -535,10 +718,14 @@
       "body": 3,
       "description": "Выдержанный в дубе Совиньон Блан от основателей Cloudy Bay. Сложные ароматы цитрусовых, кремня и трав с кремовой текстурой.",
       "tasting_notes": "Цитрус, кремень, травы, дуб",
-      "food_pairings": ["морепродукты на гриле", "ризотто", "мягкие сыры"],
-      "price_usd": 65.00,
+      "food_pairings": [
+        "морепродукты на гриле",
+        "ризотто",
+        "мягкие сыры"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1566995541428-f2246c17cda1?w=400"
+      "image_url": "https://images.unsplash.com/photo-1566995541428-f2246c17cda1?w=400",
+      "price_rub": 5200.0
     },
     {
       "name": "Pieropan Soave Classico La Rocca 2021",
@@ -547,7 +734,9 @@
       "country": "Italy",
       "region": "Veneto",
       "appellation": "Soave Classico DOC",
-      "grape_varieties": ["Garganega"],
+      "grape_varieties": [
+        "Garganega"
+      ],
       "wine_type": "white",
       "sweetness": "dry",
       "acidity": 4,
@@ -555,10 +744,14 @@
       "body": 3,
       "description": "Эталонное Соаве с одного виноградника. Ароматы белых цветов, миндаля и цитрусовых с минеральным характером и освежающим финишем.",
       "tasting_notes": "Белые цветы, миндаль, цитрус, минералы",
-      "food_pairings": ["ризотто", "белая рыба", "вегетарианские блюда"],
-      "price_usd": 55.00,
+      "food_pairings": [
+        "ризотто",
+        "белая рыба",
+        "вегетарианские блюда"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=400"
+      "image_url": "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=400",
+      "price_rub": 4400.0
     },
     {
       "name": "Kumeu River Maté's Vineyard Chardonnay 2021",
@@ -567,7 +760,9 @@
       "country": "New Zealand",
       "region": "Auckland",
       "appellation": "Kumeu",
-      "grape_varieties": ["Chardonnay"],
+      "grape_varieties": [
+        "Chardonnay"
+      ],
       "wine_type": "white",
       "sweetness": "dry",
       "acidity": 4,
@@ -575,10 +770,14 @@
       "body": 4,
       "description": "Бургундский стиль Шардоне из Новой Зеландии. Ароматы цитрусовых, орехов и тостов с элегантной структурой и долгим послевкусием.",
       "tasting_notes": "Цитрус, орехи, тост, сливки",
-      "food_pairings": ["курица с травами", "морепродукты", "мягкие сыры"],
-      "price_usd": 60.00,
+      "food_pairings": [
+        "курица с травами",
+        "морепродукты",
+        "мягкие сыры"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1566995541428-f2246c17cda1?w=400"
+      "image_url": "https://images.unsplash.com/photo-1566995541428-f2246c17cda1?w=400",
+      "price_rub": 4800.0
     },
     {
       "name": "Jermann Vintage Tunina 2021",
@@ -587,7 +786,13 @@
       "country": "Italy",
       "region": "Friuli-Venezia Giulia",
       "appellation": "Venezia Giulia IGT",
-      "grape_varieties": ["Sauvignon Blanc", "Chardonnay", "Ribolla Gialla", "Malvasia", "Picolit"],
+      "grape_varieties": [
+        "Sauvignon Blanc",
+        "Chardonnay",
+        "Ribolla Gialla",
+        "Malvasia",
+        "Picolit"
+      ],
       "wine_type": "white",
       "sweetness": "dry",
       "acidity": 4,
@@ -595,10 +800,14 @@
       "body": 4,
       "description": "Культовый итальянский бленд. Сложные ароматы тропических фруктов, мёда и специй с кремовой текстурой и долгим финишем.",
       "tasting_notes": "Тропические фрукты, мёд, специи, травы",
-      "food_pairings": ["морепродукты", "белое мясо", "сыры"],
-      "price_usd": 70.00,
+      "food_pairings": [
+        "морепродукты",
+        "белое мясо",
+        "сыры"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=400"
+      "image_url": "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=400",
+      "price_rub": 5600.0
     },
     {
       "name": "Robert Weil Kiedrich Gräfenberg Riesling GG 2021",
@@ -607,7 +816,9 @@
       "country": "Germany",
       "region": "Rheingau",
       "appellation": "Kiedrich Gräfenberg",
-      "grape_varieties": ["Riesling"],
+      "grape_varieties": [
+        "Riesling"
+      ],
       "wine_type": "white",
       "sweetness": "dry",
       "acidity": 5,
@@ -615,10 +826,14 @@
       "body": 3,
       "description": "Великолепный немецкий Рислинг Гроссес Гевехс. Ароматы зелёного яблока, сланца и белого персика с лазерной кислотностью.",
       "tasting_notes": "Яблоко, сланец, персик, минералы",
-      "food_pairings": ["форель", "шницель", "азиатская кухня"],
-      "price_usd": 75.00,
+      "food_pairings": [
+        "форель",
+        "шницель",
+        "азиатская кухня"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1566995541428-f2246c17cda1?w=400"
+      "image_url": "https://images.unsplash.com/photo-1566995541428-f2246c17cda1?w=400",
+      "price_rub": 6000.0
     },
     {
       "name": "Fritz Haag Brauneberger Juffer Sonnenuhr Riesling Spätlese 2022",
@@ -627,7 +842,9 @@
       "country": "Germany",
       "region": "Mosel",
       "appellation": "Brauneberger Juffer Sonnenuhr",
-      "grape_varieties": ["Riesling"],
+      "grape_varieties": [
+        "Riesling"
+      ],
       "wine_type": "white",
       "sweetness": "semi_dry",
       "acidity": 5,
@@ -635,10 +852,14 @@
       "body": 2,
       "description": "Изысканный мозельский Рислинг Шпетлезе. Ароматы персика, цветов и сланца с деликатной сладостью и освежающей кислотностью.",
       "tasting_notes": "Персик, цветы, сланец, мёд",
-      "food_pairings": ["фуа-гра", "пряная кухня", "фрукты"],
-      "price_usd": 65.00,
+      "food_pairings": [
+        "фуа-гра",
+        "пряная кухня",
+        "фрукты"
+      ],
       "price_range": "mid",
-      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/2009_Willi_Haag_Brauneberger_Juffer-Sonnenuhr_Riesling_Sp%C3%A4tlese_from_Brauneberg,_Mosel_(5026617849).jpg?width=400"
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/2009_Willi_Haag_Brauneberger_Juffer-Sonnenuhr_Riesling_Sp%C3%A4tlese_from_Brauneberg%2C_Mosel_%285026617849%29.jpg/500px-2009_Willi_Haag_Brauneberger_Juffer-Sonnenuhr_Riesling_Sp%C3%A4tlese_from_Brauneberg%2C_Mosel_%285026617849%29.jpg",
+      "price_rub": 5200.0
     },
     {
       "name": "Kistler Vineyard Chardonnay 2021",
@@ -647,7 +868,9 @@
       "country": "USA",
       "region": "California",
       "appellation": "Sonoma Coast",
-      "grape_varieties": ["Chardonnay"],
+      "grape_varieties": [
+        "Chardonnay"
+      ],
       "wine_type": "white",
       "sweetness": "dry",
       "acidity": 4,
@@ -655,10 +878,14 @@
       "body": 4,
       "description": "Бургундский стиль Шардоне из Сономы. Ароматы лимона, яблока и тостов с кремовой текстурой и долгим минеральным послевкусием.",
       "tasting_notes": "Лимон, яблоко, тост, минералы",
-      "food_pairings": ["лобстер", "курица с соусом", "мягкие сыры"],
-      "price_usd": 80.00,
+      "food_pairings": [
+        "лобстер",
+        "курица с соусом",
+        "мягкие сыры"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1566995541428-f2246c17cda1?w=400"
+      "image_url": "https://images.unsplash.com/photo-1566995541428-f2246c17cda1?w=400",
+      "price_rub": 6400.0
     },
     {
       "name": "Stag's Leap Wine Cellars KARIA Chardonnay 2022",
@@ -667,7 +894,9 @@
       "country": "USA",
       "region": "California",
       "appellation": "Napa Valley",
-      "grape_varieties": ["Chardonnay"],
+      "grape_varieties": [
+        "Chardonnay"
+      ],
       "wine_type": "white",
       "sweetness": "dry",
       "acidity": 3,
@@ -675,10 +904,14 @@
       "body": 4,
       "description": "Элегантное калифорнийское Шардоне. Ароматы груши, ванили и сливочного масла с округлой текстурой и продолжительным финишем.",
       "tasting_notes": "Груша, ваниль, масло, тропические фрукты",
-      "food_pairings": ["лобстер", "паста с соусом", "мягкие сыры"],
-      "price_usd": 55.00,
+      "food_pairings": [
+        "лобстер",
+        "паста с соусом",
+        "мягкие сыры"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=400"
+      "image_url": "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=400",
+      "price_rub": 4400.0
     },
     {
       "name": "Penfolds Yattarna Chardonnay 2021",
@@ -687,7 +920,9 @@
       "country": "Australia",
       "region": "Tasmania",
       "appellation": null,
-      "grape_varieties": ["Chardonnay"],
+      "grape_varieties": [
+        "Chardonnay"
+      ],
       "wine_type": "white",
       "sweetness": "dry",
       "acidity": 4,
@@ -695,10 +930,14 @@
       "body": 4,
       "description": "Флагманское австралийское Шардоне. Ароматы белого персика, лимона и жареного миндаля с кремовой текстурой и минеральным послевкусием.",
       "tasting_notes": "Персик, лимон, миндаль, минералы",
-      "food_pairings": ["лобстер", "морские гребешки", "курица с травами"],
-      "price_usd": 95.00,
+      "food_pairings": [
+        "лобстер",
+        "морские гребешки",
+        "курица с травами"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1566995541428-f2246c17cda1?w=400"
+      "image_url": "https://images.unsplash.com/photo-1566995541428-f2246c17cda1?w=400",
+      "price_rub": 7600.0
     },
     {
       "name": "Château d'Esclans Garrus Rosé 2022",
@@ -707,7 +946,10 @@
       "country": "France",
       "region": "Provence",
       "appellation": "Côtes de Provence",
-      "grape_varieties": ["Grenache", "Rolle"],
+      "grape_varieties": [
+        "Grenache",
+        "Rolle"
+      ],
       "wine_type": "rose",
       "sweetness": "dry",
       "acidity": 4,
@@ -715,10 +957,14 @@
       "body": 3,
       "description": "Культовое провансальское розе, выдержанное в дубе. Ароматы белого персика, цитрусовых и специй с кремовой текстурой и долгим финишем.",
       "tasting_notes": "Персик, цитрус, специи, сливки",
-      "food_pairings": ["лобстер", "белая рыба", "выдержанные сыры"],
-      "price_usd": 110.00,
+      "food_pairings": [
+        "лобстер",
+        "белая рыба",
+        "выдержанные сыры"
+      ],
       "price_range": "premium",
-      "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=400"
+      "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=400",
+      "price_rub": 8800.0
     },
     {
       "name": "Domaines Ott Château de Selle Rosé 2023",
@@ -727,7 +973,11 @@
       "country": "France",
       "region": "Provence",
       "appellation": "Côtes de Provence",
-      "grape_varieties": ["Grenache", "Cinsault", "Syrah"],
+      "grape_varieties": [
+        "Grenache",
+        "Cinsault",
+        "Syrah"
+      ],
       "wine_type": "rose",
       "sweetness": "dry",
       "acidity": 4,
@@ -735,10 +985,14 @@
       "body": 2,
       "description": "Иконическое провансальское розе с элегантной бутылкой. Ароматы красных ягод, цитрусовых и лепестков роз с освежающей кислотностью.",
       "tasting_notes": "Красные ягоды, цитрус, роза, травы",
-      "food_pairings": ["буйабес", "салаты", "морепродукты"],
-      "price_usd": 65.00,
+      "food_pairings": [
+        "буйабес",
+        "салаты",
+        "морепродукты"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=400"
+      "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=400",
+      "price_rub": 5200.0
     },
     {
       "name": "Miraval Rosé 2023",
@@ -747,7 +1001,12 @@
       "country": "France",
       "region": "Provence",
       "appellation": "Côtes de Provence",
-      "grape_varieties": ["Cinsault", "Grenache", "Syrah", "Rolle"],
+      "grape_varieties": [
+        "Cinsault",
+        "Grenache",
+        "Syrah",
+        "Rolle"
+      ],
       "wine_type": "rose",
       "sweetness": "dry",
       "acidity": 4,
@@ -755,10 +1014,14 @@
       "body": 2,
       "description": "Знаменитое розе от Джоли-Питт. Нежные ароматы клубники, персика и цитрусовых с минеральным характером и освежающим финишем.",
       "tasting_notes": "Клубника, персик, цитрус, минералы",
-      "food_pairings": ["салаты", "гриль", "средиземноморская кухня"],
-      "price_usd": 55.00,
+      "food_pairings": [
+        "салаты",
+        "гриль",
+        "средиземноморская кухня"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=400"
+      "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=400",
+      "price_rub": 4400.0
     },
     {
       "name": "Domaine Tempier Bandol Rosé 2023",
@@ -767,7 +1030,11 @@
       "country": "France",
       "region": "Provence",
       "appellation": "Bandol",
-      "grape_varieties": ["Mourvèdre", "Grenache", "Cinsault"],
+      "grape_varieties": [
+        "Mourvèdre",
+        "Grenache",
+        "Cinsault"
+      ],
       "wine_type": "rose",
       "sweetness": "dry",
       "acidity": 4,
@@ -775,10 +1042,14 @@
       "body": 3,
       "description": "Серьёзное гастрономическое розе из Бандоля. Ароматы красных фруктов, специй и гарриги с выраженной структурой.",
       "tasting_notes": "Красные фрукты, специи, гаррига, травы",
-      "food_pairings": ["буйабес", "ягнёнок", "пряные блюда"],
-      "price_usd": 60.00,
+      "food_pairings": [
+        "буйабес",
+        "ягнёнок",
+        "пряные блюда"
+      ],
       "price_range": "mid",
-      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Bandol_rose.jpg?width=400"
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Bandol_rose.jpg/500px-Bandol_rose.jpg",
+      "price_rub": 4800.0
     },
     {
       "name": "Marqués de Cáceres Rosado 2023",
@@ -787,7 +1058,10 @@
       "country": "Spain",
       "region": "La Rioja",
       "appellation": "Rioja DOCa",
-      "grape_varieties": ["Tempranillo", "Garnacha"],
+      "grape_varieties": [
+        "Tempranillo",
+        "Garnacha"
+      ],
       "wine_type": "rose",
       "sweetness": "dry",
       "acidity": 4,
@@ -795,10 +1069,14 @@
       "body": 2,
       "description": "Классическое испанское розе. Яркие ароматы малины, клубники и цитрусовых с освежающей кислотностью и лёгким телом.",
       "tasting_notes": "Малина, клубника, цитрус, цветы",
-      "food_pairings": ["тапас", "паэлья", "морепродукты"],
-      "price_usd": 50.00,
+      "food_pairings": [
+        "тапас",
+        "паэлья",
+        "морепродукты"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=400"
+      "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=400",
+      "price_rub": 4000.0
     },
     {
       "name": "Bodegas Muga Rosado 2023",
@@ -807,7 +1085,10 @@
       "country": "Spain",
       "region": "La Rioja",
       "appellation": "Rioja DOCa",
-      "grape_varieties": ["Garnacha", "Viura"],
+      "grape_varieties": [
+        "Garnacha",
+        "Viura"
+      ],
       "wine_type": "rose",
       "sweetness": "dry",
       "acidity": 4,
@@ -815,10 +1096,14 @@
       "body": 2,
       "description": "Традиционное риоханское розе. Ароматы красных ягод и цитрусовых с освежающим характером и гастрономическим потенциалом.",
       "tasting_notes": "Красные ягоды, цитрус, травы",
-      "food_pairings": ["хамон", "тапас", "рыба на гриле"],
-      "price_usd": 50.00,
+      "food_pairings": [
+        "хамон",
+        "тапас",
+        "рыба на гриле"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=400"
+      "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=400",
+      "price_rub": 4000.0
     },
     {
       "name": "Rosa dei Masi 2023",
@@ -827,7 +1112,9 @@
       "country": "Italy",
       "region": "Veneto",
       "appellation": "Rosato delle Venezie IGT",
-      "grape_varieties": ["Refosco"],
+      "grape_varieties": [
+        "Refosco"
+      ],
       "wine_type": "rose",
       "sweetness": "dry",
       "acidity": 4,
@@ -835,10 +1122,14 @@
       "body": 2,
       "description": "Элегантное венецианское розе. Ароматы малины, вишни и лепестков роз с освежающей минеральностью.",
       "tasting_notes": "Малина, вишня, роза, минералы",
-      "food_pairings": ["антипасто", "пицца", "паста"],
-      "price_usd": 50.00,
+      "food_pairings": [
+        "антипасто",
+        "пицца",
+        "паста"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=400"
+      "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=400",
+      "price_rub": 4000.0
     },
     {
       "name": "Saintsbury Vin Gris of Pinot Noir 2023",
@@ -847,7 +1138,9 @@
       "country": "USA",
       "region": "California",
       "appellation": "Carneros",
-      "grape_varieties": ["Pinot Noir"],
+      "grape_varieties": [
+        "Pinot Noir"
+      ],
       "wine_type": "rose",
       "sweetness": "dry",
       "acidity": 4,
@@ -855,10 +1148,14 @@
       "body": 2,
       "description": "Изысканное калифорнийское розе из Пино Нуар. Ароматы арбуза, клубники и цитрусовых с освежающей кислотностью и минеральностью.",
       "tasting_notes": "Арбуз, клубника, цитрус, минералы",
-      "food_pairings": ["салаты", "суши", "морепродукты"],
-      "price_usd": 55.00,
+      "food_pairings": [
+        "салаты",
+        "суши",
+        "морепродукты"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=400"
+      "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0?w=400",
+      "price_rub": 4400.0
     },
     {
       "name": "Dom Pérignon Vintage 2013",
@@ -867,7 +1164,10 @@
       "country": "France",
       "region": "Champagne",
       "appellation": "Champagne",
-      "grape_varieties": ["Chardonnay", "Pinot Noir"],
+      "grape_varieties": [
+        "Chardonnay",
+        "Pinot Noir"
+      ],
       "wine_type": "sparkling",
       "sweetness": "dry",
       "acidity": 4,
@@ -875,10 +1175,14 @@
       "body": 3,
       "description": "Легендарное престижное кюве. Ароматы цитрусовых, миндаля и бриоши с тонким перляжем и исключительной комплексностью.",
       "tasting_notes": "Цитрус, миндаль, бриошь, мёд",
-      "food_pairings": ["икра", "устрицы", "высокая кухня"],
-      "price_usd": 200.00,
+      "food_pairings": [
+        "икра",
+        "устрицы",
+        "высокая кухня"
+      ],
       "price_range": "premium",
-      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Dom_P%C3%A9rignon_Champagne_2012.jpg?width=400"
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/Dom_P%C3%A9rignon_Champagne_2012.jpg/500px-Dom_P%C3%A9rignon_Champagne_2012.jpg",
+      "price_rub": 16000.0
     },
     {
       "name": "Veuve Clicquot Yellow Label Brut NV",
@@ -887,7 +1191,11 @@
       "country": "France",
       "region": "Champagne",
       "appellation": "Champagne",
-      "grape_varieties": ["Pinot Noir", "Chardonnay", "Pinot Meunier"],
+      "grape_varieties": [
+        "Pinot Noir",
+        "Chardonnay",
+        "Pinot Meunier"
+      ],
       "wine_type": "sparkling",
       "sweetness": "dry",
       "acidity": 4,
@@ -895,10 +1203,14 @@
       "body": 3,
       "description": "Культовое шампанское с узнаваемой жёлтой этикеткой. Ароматы яблока, бриоши и ванили с освежающей кислотностью и долгим финишем.",
       "tasting_notes": "Яблоко, бриошь, ваниль, цитрус",
-      "food_pairings": ["канапе", "морепродукты", "лёгкие закуски"],
-      "price_usd": 65.00,
+      "food_pairings": [
+        "канапе",
+        "морепродукты",
+        "лёгкие закуски"
+      ],
       "price_range": "mid",
-      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Veuve_clicquot_bottle_sizes.jpg?width=400"
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Veuve_clicquot_bottle_sizes.jpg/500px-Veuve_clicquot_bottle_sizes.jpg",
+      "price_rub": 5200.0
     },
     {
       "name": "Bollinger Special Cuvée Brut NV",
@@ -907,7 +1219,11 @@
       "country": "France",
       "region": "Champagne",
       "appellation": "Champagne",
-      "grape_varieties": ["Pinot Noir", "Chardonnay", "Pinot Meunier"],
+      "grape_varieties": [
+        "Pinot Noir",
+        "Chardonnay",
+        "Pinot Meunier"
+      ],
       "wine_type": "sparkling",
       "sweetness": "dry",
       "acidity": 4,
@@ -915,10 +1231,14 @@
       "body": 4,
       "description": "Полнотелое шампанское в традиционном стиле дома. Ароматы яблока, груши и тостов с кремовой текстурой и долгим послевкусием.",
       "tasting_notes": "Яблоко, груша, тост, орехи",
-      "food_pairings": ["устрицы", "белая рыба", "выдержанные сыры"],
-      "price_usd": 70.00,
+      "food_pairings": [
+        "устрицы",
+        "белая рыба",
+        "выдержанные сыры"
+      ],
       "price_range": "mid",
-      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Bollinger_01315.JPG?width=400"
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Bollinger_01315.JPG/500px-Bollinger_01315.JPG",
+      "price_rub": 5600.0
     },
     {
       "name": "Ruinart Blanc de Blancs NV",
@@ -927,7 +1247,9 @@
       "country": "France",
       "region": "Champagne",
       "appellation": "Champagne",
-      "grape_varieties": ["Chardonnay"],
+      "grape_varieties": [
+        "Chardonnay"
+      ],
       "wine_type": "sparkling",
       "sweetness": "dry",
       "acidity": 5,
@@ -935,10 +1257,14 @@
       "body": 2,
       "description": "Элегантное шампанское из 100% Шардоне от старейшего дома. Ароматы цитрусовых, белых цветов и миндаля с тонким перляжем.",
       "tasting_notes": "Цитрус, белые цветы, миндаль, мел",
-      "food_pairings": ["морепродукты", "суши", "лёгкие закуски"],
-      "price_usd": 80.00,
+      "food_pairings": [
+        "морепродукты",
+        "суши",
+        "лёгкие закуски"
+      ],
       "price_range": "mid",
-      "image_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Champagne_Ruinart.jpg?width=400"
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Champagne_Ruinart.jpg/500px-Champagne_Ruinart.jpg",
+      "price_rub": 6400.0
     },
     {
       "name": "Franciacorta Bellavista Alma Gran Cuvée Brut NV",
@@ -947,7 +1273,11 @@
       "country": "Italy",
       "region": "Lombardy",
       "appellation": "Franciacorta DOCG",
-      "grape_varieties": ["Chardonnay", "Pinot Noir", "Pinot Blanc"],
+      "grape_varieties": [
+        "Chardonnay",
+        "Pinot Noir",
+        "Pinot Blanc"
+      ],
       "wine_type": "sparkling",
       "sweetness": "dry",
       "acidity": 4,
@@ -955,10 +1285,14 @@
       "body": 3,
       "description": "Великолепная Франчакорта, итальянский ответ шампанскому. Ароматы зелёного яблока, цитрусовых и хлебной корочки с элегантным перляжем.",
       "tasting_notes": "Яблоко, цитрус, хлеб, минералы",
-      "food_pairings": ["ризотто", "морепродукты", "антипасто"],
-      "price_usd": 55.00,
+      "food_pairings": [
+        "ризотто",
+        "морепродукты",
+        "антипасто"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1549934151-05c1d7cfaa07?w=400"
+      "image_url": "https://images.unsplash.com/photo-1549934151-05c1d7cfaa07?w=400",
+      "price_rub": 4400.0
     },
     {
       "name": "Ca' del Bosco Cuvée Prestige Franciacorta DOCG NV",
@@ -967,7 +1301,11 @@
       "country": "Italy",
       "region": "Lombardy",
       "appellation": "Franciacorta DOCG",
-      "grape_varieties": ["Chardonnay", "Pinot Nero", "Pinot Bianco"],
+      "grape_varieties": [
+        "Chardonnay",
+        "Pinot Nero",
+        "Pinot Bianco"
+      ],
       "wine_type": "sparkling",
       "sweetness": "dry",
       "acidity": 4,
@@ -975,10 +1313,14 @@
       "body": 3,
       "description": "Премиальная Франчакорта от пионера региона. Ароматы белых фруктов, тостов и цветов с кремовой текстурой и долгим минеральным финишем.",
       "tasting_notes": "Белые фрукты, тост, цветы, минералы",
-      "food_pairings": ["ризотто с шафраном", "морепродукты", "сыры"],
-      "price_usd": 60.00,
+      "food_pairings": [
+        "ризотто с шафраном",
+        "морепродукты",
+        "сыры"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1549934151-05c1d7cfaa07?w=400"
+      "image_url": "https://images.unsplash.com/photo-1549934151-05c1d7cfaa07?w=400",
+      "price_rub": 4800.0
     },
     {
       "name": "Gramona Imperial Gran Reserva Brut 2017",
@@ -987,7 +1329,11 @@
       "country": "Spain",
       "region": "Catalonia",
       "appellation": "Corpinnat",
-      "grape_varieties": ["Xarel·lo", "Macabeo", "Parellada"],
+      "grape_varieties": [
+        "Xarel·lo",
+        "Macabeo",
+        "Parellada"
+      ],
       "wine_type": "sparkling",
       "sweetness": "dry",
       "acidity": 4,
@@ -995,10 +1341,14 @@
       "body": 3,
       "description": "Престижная испанская кава с долгой выдержкой на осадке. Ароматы айвы, орехов и бриоши с комплексной структурой.",
       "tasting_notes": "Айва, орехи, бриошь, мёд",
-      "food_pairings": ["хамон", "морепродукты", "тапас"],
-      "price_usd": 50.00,
+      "food_pairings": [
+        "хамон",
+        "морепродукты",
+        "тапас"
+      ],
       "price_range": "mid",
-      "image_url": "https://images.unsplash.com/photo-1549934151-05c1d7cfaa07?w=400"
+      "image_url": "https://images.unsplash.com/photo-1549934151-05c1d7cfaa07?w=400",
+      "price_rub": 4000.0
     }
   ]
 }

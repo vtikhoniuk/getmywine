@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: AI-Sommelier Auth API
+  title: GetMyWine Auth API
   description: API для регистрации и авторизации пользователей
   version: 1.0.0
 

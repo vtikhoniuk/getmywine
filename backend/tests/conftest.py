@@ -134,7 +134,7 @@ async def seed_wines(db_session: AsyncSession) -> AsyncGenerator[None, None]:
             description=wine_data["description"],
             tasting_notes=wine_data.get("tasting_notes"),
             food_pairings=wine_data.get("food_pairings"),
-            price_usd=wine_data["price_usd"],
+            price_rub=wine_data["price_rub"],
             price_range=PriceRange(wine_data["price_range"]),
             image_url=wine_data.get("image_url"),
             # embedding is None for SQLite tests (no pgvector support)

@@ -22,7 +22,7 @@ from app.services.sommelier import (
 logger = logging.getLogger(__name__)
 
 # Fallback welcome message (used if sommelier service fails)
-WELCOME_MESSAGE_FALLBACK = """Привет! Я AI-сомелье, и я помогу вам разобраться в мире вина.
+WELCOME_MESSAGE_FALLBACK = """Привет! Я GetMyWine, и я помогу вам разобраться в мире вина.
 
 Я могу:
 - Подобрать вино под ваши предпочтения

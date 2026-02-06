@@ -33,7 +33,7 @@ research_topic: 'AI Wine Opportunities - Use Cases, UCP, Consumer Journey, Monet
 
 | Use Case | Описание | AI Impact | Maturity |
 |----------|----------|-----------|----------|
-| **Personalization & Recommendations** | AI-сомелье анализирует предпочтения, reviews, food pairings | +23% revenue uplift | Production |
+| **Personalization & Recommendations** | GetMyWine анализирует предпочтения, reviews, food pairings | +23% revenue uplift | Production |
 | **Flavor Mapping** | Молекулярный анализ вина + ML для предсказания вкуса | Tastry AI лидер | Growing |
 | **Quality Prediction** | ML предсказывает качество вина до урожая | 15-20% yield efficiency | Growing |
 | **Vineyard Management** | Предсказание погоды, ирригация, болезни, pest management | Снижение потерь | Production |

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
-  title: AI-Sommelier Chat API
-  description: API для чат-интерфейса AI-сомелье
+  title: GetMyWine Chat API
+  description: API для чат-интерфейса GetMyWine
   version: 1.0.0
 
 servers:
@@ -243,4 +243,4 @@ components:
 
 tags:
   - name: chat
-    description: Чат с AI-сомелье
+    description: Чат с GetMyWine

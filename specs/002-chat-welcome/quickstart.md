@@ -15,10 +15,10 @@
 
 ```bash
 # Создать миграцию (если нужно сгенерировать)
-docker exec ai-sommelier-backend alembic revision --autogenerate -m "create_chat_tables"
+docker exec getmywine-backend alembic revision --autogenerate -m "create_chat_tables"
 
 # Применить миграции
-docker exec ai-sommelier-backend alembic upgrade head
+docker exec getmywine-backend alembic upgrade head
 ```
 
 ### 2. Проверить API
@@ -58,7 +58,7 @@ make test
 ### Запуск только тестов чата
 
 ```bash
-docker exec ai-sommelier-backend python -m pytest tests/ -k chat -v
+docker exec getmywine-backend python -m pytest tests/ -k chat -v
 ```
 
 ### Тестовые сценарии

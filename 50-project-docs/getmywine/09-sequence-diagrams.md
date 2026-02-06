@@ -1,4 +1,4 @@
-# Sequence Диаграммы: AI-Sommelier
+# Sequence Диаграммы: GetMyWine
 
 > **Дата:** 2026-02-01
 > **Версия:** 1.0

@@ -44,9 +44,9 @@ class Sweetness(str, enum.Enum):
 class PriceRange(str, enum.Enum):
     """Wine price range enum."""
 
-    BUDGET = "budget"  # < $30
-    MID = "mid"  # $30-100
-    PREMIUM = "premium"  # > $100
+    BUDGET = "budget"  # < 2400₽
+    MID = "mid"  # 2400₽-8000₽
+    PREMIUM = "premium"  # > 8000₽
 
 
 class Wine(Base):
@@ -132,7 +132,7 @@ class Wine(Base):
         ARRAY(String(100)),
         nullable=True,
     )
-    price_usd: Mapped[Decimal] = mapped_column(
+    price_rub: Mapped[Decimal] = mapped_column(
         Numeric(10, 2),
         nullable=False,
         index=True,
@@ -174,7 +174,7 @@ class Wine(Base):
         CheckConstraint("acidity >= 1 AND acidity <= 5", name="ck_wines_acidity"),
         CheckConstraint("tannins >= 1 AND tannins <= 5", name="ck_wines_tannins"),
         CheckConstraint("body >= 1 AND body <= 5", name="ck_wines_body"),
-        CheckConstraint("price_usd > 0", name="ck_wines_price_usd"),
+        CheckConstraint("price_rub > 0", name="ck_wines_price_rub"),
     )
 
     def __repr__(self) -> str:

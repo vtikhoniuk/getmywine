@@ -21,7 +21,7 @@ SAMPLE_WINES = [
         "description": "Элегантное вино с нотами чёрной смородины, фиалки и кедра. Шелковистые танины и долгое послевкусие.",
         "tasting_notes": "Чёрная смородина, фиалка, кедр, графит",
         "food_pairings": ["стейк", "баранина", "выдержанные сыры"],
-        "price_usd": 450.00,
+        "price_rub": 36000.00,
         "price_range": "premium",
         "image_url": "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3",
     },
@@ -42,8 +42,8 @@ SAMPLE_WINES = [
         "description": "Освежающее вино с яркой кислотностью и нотами цитрусовых, крыжовника и свежескошенной травы.",
         "tasting_notes": "Лайм, грейпфрут, крыжовник, трава",
         "food_pairings": ["морепродукты", "салаты", "козий сыр"],
-        "price_usd": 28.00,
-        "price_range": "mid",
+        "price_rub": 2240.00,
+        "price_range": "budget",
         "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0",
     },
     {
@@ -63,7 +63,7 @@ SAMPLE_WINES = [
         "description": "Классическое шампанское с тонким перляжем и нотами зелёного яблока, цитрусовых и бриоши.",
         "tasting_notes": "Яблоко, цитрус, бриошь, миндаль",
         "food_pairings": ["устрицы", "канапе", "белая рыба"],
-        "price_usd": 55.00,
+        "price_rub": 4400.00,
         "price_range": "mid",
         "image_url": "https://images.unsplash.com/photo-1549934151-05c1d7cfaa07",
     },
@@ -84,7 +84,7 @@ SAMPLE_WINES = [
         "description": "Бледно-розовое вино с ароматами клубники, персика и лёгкими цветочными нотами.",
         "tasting_notes": "Клубника, персик, цветы, минералы",
         "food_pairings": ["салаты", "гриль", "средиземноморская кухня"],
-        "price_usd": 24.00,
+        "price_rub": 1920.00,
         "price_range": "budget",
         "image_url": "https://images.unsplash.com/photo-1558001373-7b93ee48ffa0",
     },
@@ -105,7 +105,7 @@ SAMPLE_WINES = [
         "description": "Культовое итальянское Мерло с глубоким рубиновым цветом, нотами спелых ягод, специй и шоколада.",
         "tasting_notes": "Ежевика, слива, специи, шоколад, ваниль",
         "food_pairings": ["дичь", "трюфели", "ризотто с грибами"],
-        "price_usd": 750.00,
+        "price_rub": 60000.00,
         "price_range": "premium",
         "image_url": "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3",
     },
@@ -129,11 +129,11 @@ def get_white_wines() -> list[dict]:
 
 def get_wines_by_price_range(min_price: float, max_price: float) -> list[dict]:
     """Get wines within a price range."""
-    return [w for w in SAMPLE_WINES if min_price <= w["price_usd"] <= max_price]
+    return [w for w in SAMPLE_WINES if min_price <= w["price_rub"] <= max_price]
 
 
 def get_premium_wines() -> list[dict]:
-    """Get premium wines (>$100)."""
+    """Get premium wines (>8000₽)."""
     return [w for w in SAMPLE_WINES if w["price_range"] == "premium"]
 
 

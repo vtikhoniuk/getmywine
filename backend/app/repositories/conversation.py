@@ -2,13 +2,15 @@
 
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Literal, Optional
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.conversation import Conversation
+
+ChannelType = Literal["web", "telegram"]
 
 
 class ConversationRepository:
@@ -219,3 +221,122 @@ class ConversationRepository:
         """
         await self.db.delete(conversation)
         await self.db.flush()
+
+    # =========================================================================
+    # Telegram channel support
+    # =========================================================================
+
+    async def get_active_by_telegram_user_id(
+        self,
+        telegram_user_id: uuid.UUID,
+        inactivity_hours: int = 24,
+    ) -> Optional[Conversation]:
+        """Get the most recent active conversation for a Telegram user.
+
+        Args:
+            telegram_user_id: The TelegramUser's internal UUID
+            inactivity_hours: Hours of inactivity before session expires
+
+        Returns:
+            Active conversation if found, else None
+        """
+        threshold = datetime.now(timezone.utc) - timedelta(hours=inactivity_hours)
+        result = await self.db.execute(
+            select(Conversation)
+            .where(
+                Conversation.telegram_user_id == telegram_user_id,
+                Conversation.channel == "telegram",
+                Conversation.closed_at.is_(None),
+                Conversation.updated_at > threshold,
+            )
+            .order_by(Conversation.updated_at.desc())
+            .limit(1)
+            .options(selectinload(Conversation.messages))
+        )
+        return result.scalar_one_or_none()
+
+    async def create_telegram_conversation(
+        self,
+        telegram_user_id: uuid.UUID,
+        title: Optional[str] = None,
+    ) -> Conversation:
+        """Create a new conversation for a Telegram user.
+
+        Args:
+            telegram_user_id: The TelegramUser's internal UUID
+            title: Optional initial title
+
+        Returns:
+            The newly created conversation
+        """
+        conversation = Conversation(
+            telegram_user_id=telegram_user_id,
+            channel="telegram",
+            title=title,
+        )
+        self.db.add(conversation)
+        await self.db.flush()
+        await self.db.refresh(conversation)
+        return conversation
+
+    async def close_inactive_telegram_sessions(
+        self,
+        telegram_user_id: uuid.UUID,
+        inactivity_hours: int = 24,
+    ) -> int:
+        """Close all inactive Telegram sessions for a user.
+
+        Args:
+            telegram_user_id: The TelegramUser's internal UUID
+            inactivity_hours: Hours of inactivity before closing
+
+        Returns:
+            Number of sessions closed
+        """
+        threshold = datetime.now(timezone.utc) - timedelta(hours=inactivity_hours)
+        result = await self.db.execute(
+            update(Conversation)
+            .where(
+                Conversation.telegram_user_id == telegram_user_id,
+                Conversation.channel == "telegram",
+                Conversation.closed_at.is_(None),
+                Conversation.updated_at < threshold,
+            )
+            .values(closed_at=func.now())
+        )
+        await self.db.flush()
+        return result.rowcount
+
+    async def get_or_create_active_telegram_conversation(
+        self,
+        telegram_user_id: uuid.UUID,
+        inactivity_hours: int = 24,
+        title: Optional[str] = None,
+    ) -> tuple[Conversation, bool]:
+        """Get active Telegram conversation or create a new one.
+
+        Args:
+            telegram_user_id: The TelegramUser's internal UUID
+            inactivity_hours: Hours of inactivity before session expires
+            title: Title for new conversation if created
+
+        Returns:
+            Tuple of (Conversation, was_created)
+        """
+        # Try to get active conversation
+        conversation = await self.get_active_by_telegram_user_id(
+            telegram_user_id, inactivity_hours
+        )
+        if conversation:
+            return conversation, False
+
+        # Close any expired sessions
+        await self.close_inactive_telegram_sessions(
+            telegram_user_id, inactivity_hours
+        )
+
+        # Create new conversation
+        conversation = await self.create_telegram_conversation(
+            telegram_user_id, title
+        )
+        return conversation, True

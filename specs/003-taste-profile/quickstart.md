@@ -22,10 +22,10 @@ docker compose up -d
 docker compose exec backend alembic upgrade head
 
 # 4. Проверить миграцию
-docker compose exec db psql -U ai_sommelier -c "\dt" | grep -E "(taste_profiles|wine_memories)"
+docker compose exec db psql -U getmywine -c "\dt" | grep -E "(taste_profiles|wine_memories)"
 # Ожидаемый вывод:
-#  public | taste_profiles | table | ai_sommelier
-#  public | wine_memories  | table | ai_sommelier
+#  public | taste_profiles | table | getmywine
+#  public | wine_memories  | table | getmywine
 ```
 
 ## Validation Scenarios
@@ -228,7 +228,7 @@ Mock extractor работает по ключевым словам. Провер
 
 ```bash
 # Удалить тестовые данные
-docker compose exec db psql -U ai_sommelier -c "DELETE FROM wine_memories; DELETE FROM taste_profiles;"
+docker compose exec db psql -U getmywine -c "DELETE FROM wine_memories; DELETE FROM taste_profiles;"
 
 # Остановить окружение
 docker compose down

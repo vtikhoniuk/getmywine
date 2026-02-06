@@ -134,7 +134,7 @@ class TestChatFlow:
         # Access chat page
         response = await client.get("/chat")
         assert response.status_code == 200
-        assert "AI-Sommelier" in response.text
+        assert "GetMyWine" in response.text
         assert "18" in response.text  # 18+ warning
 
     async def test_ai_responds_in_russian(self, client: AsyncClient):

@@ -42,7 +42,7 @@ async def password_reset_page(request: Request):
 
 @router.get("/chat", response_class=HTMLResponse)
 async def chat_page(request: Request):
-    """Chat page with AI sommelier."""
+    """Chat page with GetMyWine sommelier."""
     return templates.TemplateResponse(
         "chat.html",
         {"request": request},

@@ -35,7 +35,7 @@ async def sample_wine(db_session: AsyncSession) -> Wine:
         description="A test wine with rich flavors and smooth tannins.",
         tasting_notes="Dark fruits, oak, vanilla",
         food_pairings=["steak", "lamb"],
-        price_usd=Decimal("75.00"),
+        price_rub=Decimal("6000.00"),
         price_range=PriceRange.MID,
         image_url="https://example.com/wine.jpg",
     )
@@ -103,7 +103,7 @@ class TestWineRepositoryGetList:
                 tannins=3,
                 body=3,
                 description="A test wine description for testing.",
-                price_usd=Decimal("50.00"),
+                price_rub=Decimal("4000.00"),
                 price_range=PriceRange.MID,
             )
             db_session.add(wine)
@@ -132,7 +132,7 @@ class TestWineRepositoryGetList:
                 tannins=3,
                 body=3,
                 description="A test wine description for testing.",
-                price_usd=Decimal("50.00"),
+                price_rub=Decimal("4000.00"),
                 price_range=PriceRange.MID,
             )
             db_session.add(wine)

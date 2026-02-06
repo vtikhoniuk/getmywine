@@ -1,4 +1,4 @@
-"""LLM prompts for AI Sommelier.
+"""LLM prompts for GetMyWine sommelier.
 
 Contains system prompts and templates for different scenarios.
 """
@@ -9,7 +9,7 @@ from typing import Optional
 # SYSTEM PROMPTS
 # =============================================================================
 
-SYSTEM_PROMPT_BASE = """Ты — AI-сомелье по имени Винни. Твоя задача — помогать людям выбирать вино.
+SYSTEM_PROMPT_BASE = """Ты — GetMyWine, виртуальный сомелье по имени Винни. Твоя задача — помогать людям выбирать вино.
 
 КЛЮЧЕВЫЕ ПРИНЦИПЫ:
 1. Дружелюбный тон без снобизма — вино для всех, независимо от опыта
@@ -210,7 +210,7 @@ def format_wine_catalog_for_prompt(wines: list, max_wines: int = 20) -> str:
    Сорта: {grapes}
    Тип: {wine.wine_type.value}, Сладость: {wine.sweetness.value}
    Тело: {wine.body}/5, Танины: {wine.tannins}/5, Кислотность: {wine.acidity}/5
-   Цена: ${wine.price_usd} ({wine.price_range.value})
+   Цена: {wine.price_rub}₽ ({wine.price_range.value})
    Описание: {wine.description}
    Ноты: {wine.tasting_notes or 'N/A'}
    К блюдам: {pairings}

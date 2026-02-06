@@ -25,12 +25,12 @@
 
 ```env
 # Database
-POSTGRES_USER=ai_sommelier
+POSTGRES_USER=getmywine
 POSTGRES_PASSWORD=change-me-in-production
-POSTGRES_DB=ai_sommelier
+POSTGRES_DB=getmywine
 
 # Backend
-DATABASE_URL=postgresql+asyncpg://ai_sommelier:change-me-in-production@db:5432/ai_sommelier
+DATABASE_URL=postgresql+asyncpg://getmywine:change-me-in-production@db:5432/getmywine
 
 # JWT
 JWT_SECRET=your-super-secret-key-change-in-production
@@ -42,7 +42,7 @@ SMTP_HOST=smtp.example.com
 SMTP_PORT=587
 SMTP_USER=noreply@example.com
 SMTP_PASSWORD=smtp-password
-SMTP_FROM=AI-Sommelier <noreply@example.com>
+SMTP_FROM=GetMyWine <noreply@example.com>
 
 # Rate limiting
 RATE_LIMIT_LOGIN=5/15minutes
@@ -60,7 +60,7 @@ version: "3.9"
 services:
   db:
     image: postgres:16-alpine
-    container_name: ai-sommelier-db
+    container_name: getmywine-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -78,7 +78,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: ai-sommelier-backend
+    container_name: getmywine-backend
     restart: unless-stopped
     depends_on:
       db:
@@ -223,8 +223,8 @@ docker compose exec backend pytest tests/ --cov=app --cov-report=html
 
 ```bash
 ssh user@your-vps
-git clone https://github.com/your-repo/ai-sommelier.git
-cd ai-sommelier
+git clone https://github.com/your-repo/getmywine.git
+cd getmywine
 ```
 
 ### 2. Настройка .env для production

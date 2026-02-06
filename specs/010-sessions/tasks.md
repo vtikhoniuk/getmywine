@@ -174,7 +174,7 @@
 
 - [x] T051 [P] Add error handling for session not found (404) and forbidden (403) in routers — already implemented in `chat.py`
 - [x] T052 [P] Add logging for session lifecycle events in services — via SommelierService logging
-- [x] T053 Run full test suite: `uv run pytest tests/` — 118 chat/session tests pass ✅
+- [x] T053 Run full test suite: `pytest tests/` — 118 chat/session tests pass ✅
 - [ ] T054 Run quickstart.md validation: manual testing per instructions — skipped (no visual changes needed)
 - [x] T055 Update OpenAPI docs verification: check /docs endpoint — endpoints documented via FastAPI
 - [x] T056 Performance check: session list < 200ms p95 — using indexed queries ✅

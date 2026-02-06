@@ -140,7 +140,7 @@ def upgrade() -> None:
             INSERT INTO wines (
                 id, name, producer, vintage_year, country, region, appellation,
                 grape_varieties, wine_type, sweetness, acidity, tannins, body,
-                description, tasting_notes, food_pairings, price_usd, price_range,
+                description, tasting_notes, food_pairings, price_rub, price_range,
                 image_url, embedding
             ) VALUES (
                 '{wine_id}',
@@ -159,7 +159,7 @@ def upgrade() -> None:
                 '{description}',
                 {tasting_notes},
                 {food_pairings},
-                {wine["price_usd"]},
+                {wine["price_rub"]},
                 '{wine["price_range"]}',
                 {image_url},
                 {embedding_value}

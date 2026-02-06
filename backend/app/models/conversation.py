@@ -12,6 +12,7 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models.message import Message
+    from app.models.telegram_user import TelegramUser
     from app.models.user import User
 
 
@@ -29,11 +30,23 @@ class Conversation(Base):
         primary_key=True,
         default=uuid.uuid4,
     )
-    user_id: Mapped[uuid.UUID] = mapped_column(
+    user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=True,  # Nullable for Telegram conversations without web user
+        index=True,
+    )
+    channel: Mapped[str] = mapped_column(
+        String(20),
         nullable=False,
-        index=True,  # Removed unique=True to allow multiple sessions per user
+        server_default="web",
+        comment="Channel: 'web' or 'telegram'",
+    )
+    telegram_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("telegram_users.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
     )
     title: Mapped[Optional[str]] = mapped_column(
         String(30),
@@ -58,7 +71,11 @@ class Conversation(Base):
     )
 
     # Relationships
-    user: Mapped["User"] = relationship("User", lazy="joined")
+    user: Mapped[Optional["User"]] = relationship("User", lazy="joined")
+    telegram_user: Mapped[Optional["TelegramUser"]] = relationship(
+        "TelegramUser",
+        back_populates="conversations",
+    )
     messages: Mapped[list["Message"]] = relationship(
         "Message",
         back_populates="conversation",
@@ -67,16 +84,25 @@ class Conversation(Base):
     )
 
     @property
+    def session_timeout_minutes(self) -> int:
+        """Session timeout based on channel."""
+        if self.channel == "telegram":
+            return 24 * 60  # 24 hours for Telegram
+        return 30  # 30 minutes for web
+
+    @property
     def is_active(self) -> bool:
         """Check if session is active.
 
         A session is active if:
         - It has not been explicitly closed (closed_at is None)
-        - It was updated within the last 30 minutes
+        - It was updated within the session timeout period
         """
         if self.closed_at is not None:
             return False
-        threshold = datetime.now(timezone.utc) - timedelta(minutes=30)
+        threshold = datetime.now(timezone.utc) - timedelta(
+            minutes=self.session_timeout_minutes
+        )
         # Handle timezone-naive updated_at
         if self.updated_at.tzinfo is None:
             updated_at_aware = self.updated_at.replace(tzinfo=timezone.utc)
@@ -90,4 +116,4 @@ class Conversation(Base):
         return len(self.messages) if self.messages else 0
 
     def __repr__(self) -> str:
-        return f"<Conversation {self.id} user={self.user_id} title={self.title!r}>"
+        return f"<Conversation {self.id} channel={self.channel} title={self.title!r}>"

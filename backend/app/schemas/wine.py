@@ -27,7 +27,7 @@ class WineBase(BaseModel):
     description: str = Field(..., min_length=10, max_length=2000)
     tasting_notes: Optional[str] = None
     food_pairings: Optional[list[str]] = None
-    price_usd: Decimal = Field(..., gt=0)
+    price_rub: Decimal = Field(..., gt=0)
     price_range: PriceRange
     image_url: Optional[str] = Field(None, max_length=500)
 
@@ -56,7 +56,7 @@ class WineUpdate(BaseModel):
     description: Optional[str] = Field(None, min_length=10, max_length=2000)
     tasting_notes: Optional[str] = None
     food_pairings: Optional[list[str]] = None
-    price_usd: Optional[Decimal] = Field(None, gt=0)
+    price_rub: Optional[Decimal] = Field(None, gt=0)
     price_range: Optional[PriceRange] = None
     image_url: Optional[str] = Field(None, max_length=500)
 
@@ -81,7 +81,7 @@ class WineSummary(BaseModel):
     vintage_year: Optional[int] = None
     wine_type: WineType
     sweetness: Sweetness
-    price_usd: Decimal
+    price_rub: Decimal
     country: str
     image_url: Optional[str] = None
 

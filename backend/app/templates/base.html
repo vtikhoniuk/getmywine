@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}AI-Sommelier{% endblock %}</title>
+    <title>{% block title %}GetMyWine{% endblock %}</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
         * {
@@ -72,7 +72,7 @@
 </head>
 <body>
     <header class="header">
-        <a href="/" class="logo">🍷 AI-Sommelier</a>
+        <a href="/" class="logo">🍷 GetMyWine</a>
         <nav class="nav">
             {% if user %}
                 <span class="user-email">{{ user.email }}</span>
