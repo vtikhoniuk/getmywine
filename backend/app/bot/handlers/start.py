@@ -2,7 +2,7 @@
 
 import logging
 
-from telegram import InputMediaPhoto, Update
+from telegram import Update
 from telegram.ext import CommandHandler, ContextTypes
 
 from app.bot.formatters import format_welcome_message, format_wine_photo_caption
@@ -69,23 +69,20 @@ async def start_command(
                 parse_mode="Markdown",
             )
 
-            # Send wine photos as an album (best-effort)
-            wine_photos = [
-                wine for wine in wines
-                if getattr(wine, "image_url", None)
-            ]
-            if wine_photos:
+            # Send wine photos individually (best-effort)
+            for wine in wines:
+                if not getattr(wine, "image_url", None):
+                    continue
                 try:
-                    media = []
-                    for wine in wine_photos:
-                        url = await resolve_image_url(wine.image_url)
-                        media.append(InputMediaPhoto(
-                            media=url,
-                            caption=format_wine_photo_caption(wine, response_language),
-                        ))
-                    await update.message.reply_media_group(media=media)
+                    url = await resolve_image_url(wine.image_url)
+                    await update.message.reply_photo(
+                        photo=url,
+                        caption=format_wine_photo_caption(wine, response_language),
+                    )
                 except Exception as photo_err:
-                    logger.warning("Failed to send wine photos: %s", photo_err)
+                    logger.warning(
+                        "Failed to send photo for %s: %s", wine.name, photo_err,
+                    )
 
             logger.info(
                 "Sent welcome message to user %s with %d wines",

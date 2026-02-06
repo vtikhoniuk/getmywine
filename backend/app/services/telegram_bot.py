@@ -123,7 +123,7 @@ class TelegramBotService:
     async def get_welcome_wines(self, limit: int = 3) -> list[Wine]:
         """Get wines for welcome message.
 
-        Returns popular wines to show in /start response.
+        Prefers wines with photos so the bot can display them.
 
         Args:
             limit: Number of wines to return
@@ -131,9 +131,10 @@ class TelegramBotService:
         Returns:
             List of Wine objects
         """
-        # Get some wines from catalog
-        # In a real implementation, this might use user preferences
-        wines = await self.wine_repo.get_list(limit=limit)
+        wines = await self.wine_repo.get_list(limit=limit, with_image=True)
+        if len(wines) < limit:
+            extra = await self.wine_repo.get_list(limit=limit - len(wines))
+            wines.extend(extra)
         return wines
 
     async def handle_start(
@@ -269,8 +270,8 @@ class TelegramBotService:
                 conversation_history=history,
             )
 
-            # Get wines from catalog to accompany the response
-            wines = await self.wine_repo.get_list(limit=3)
+            # Get wines with photos to accompany the response
+            wines = await self.wine_repo.get_list(limit=3, with_image=True)
 
         except Exception as e:
             logger.exception("Error getting recommendation: %s", e)

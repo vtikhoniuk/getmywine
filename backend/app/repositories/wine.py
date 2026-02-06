@@ -44,6 +44,7 @@ class WineRepository:
         country: Optional[str] = None,
         body_min: Optional[int] = None,
         body_max: Optional[int] = None,
+        with_image: Optional[bool] = None,
     ) -> list[Wine]:
         """Get list of wines with optional filters."""
         query = select(Wine)
@@ -63,6 +64,8 @@ class WineRepository:
             query = query.where(Wine.body >= body_min)
         if body_max is not None:
             query = query.where(Wine.body <= body_max)
+        if with_image is True:
+            query = query.where(Wine.image_url.isnot(None))
 
         # Apply pagination
         query = query.order_by(Wine.created_at.desc())
