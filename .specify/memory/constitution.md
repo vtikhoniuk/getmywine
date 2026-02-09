@@ -77,7 +77,10 @@ Backend:
 Инфраструктура:
 ├── VPS (systemd + Nginx)
 ├── Let's Encrypt SSL
-└── GitHub (git pull deploy)
+├── Docker
+├── Docker Compose
+├── Nginx
+└── GitHub Actions CI/CD
 ```
 
 ## Coding Standards

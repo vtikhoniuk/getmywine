@@ -44,9 +44,9 @@ class Sweetness(str, enum.Enum):
 class PriceRange(str, enum.Enum):
     """Wine price range enum."""
 
-    BUDGET = "budget"  # < 2400₽
-    MID = "mid"  # 2400₽-8000₽
-    PREMIUM = "premium"  # > 8000₽
+    BUDGET = "budget"  # < 1500₽
+    MID = "mid"  # 1500₽-5000₽
+    PREMIUM = "premium"  # > 5000₽
 
 
 class Wine(Base):

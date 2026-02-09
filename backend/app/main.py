@@ -1,4 +1,7 @@
+from pathlib import Path
+
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.errors import RateLimitExceeded
 from starlette.requests import Request
@@ -32,6 +35,10 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
         },
     )
 
+
+# Serve static files (wine images, etc.)
+_static_dir = Path(__file__).resolve().parent / "static"
+app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
 
 # Include routers
 app.include_router(auth.router)

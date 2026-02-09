@@ -90,3 +90,6 @@ clean:
 
 # Rebuild and restart
 rebuild: down build up
+
+srv:
+	ssh -F ~/.ssh/ai-camp/ssh-config team10

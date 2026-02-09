@@ -24,7 +24,7 @@ class WineBase(BaseModel):
     acidity: int = Field(..., ge=1, le=5)
     tannins: int = Field(..., ge=1, le=5)
     body: int = Field(..., ge=1, le=5)
-    description: str = Field(..., min_length=10, max_length=2000)
+    description: str = Field(..., min_length=10, max_length=5000)
     tasting_notes: Optional[str] = None
     food_pairings: Optional[list[str]] = None
     price_rub: Decimal = Field(..., gt=0)
@@ -53,7 +53,7 @@ class WineUpdate(BaseModel):
     acidity: Optional[int] = Field(None, ge=1, le=5)
     tannins: Optional[int] = Field(None, ge=1, le=5)
     body: Optional[int] = Field(None, ge=1, le=5)
-    description: Optional[str] = Field(None, min_length=10, max_length=2000)
+    description: Optional[str] = Field(None, min_length=10, max_length=5000)
     tasting_notes: Optional[str] = None
     food_pairings: Optional[list[str]] = None
     price_rub: Optional[Decimal] = Field(None, gt=0)
