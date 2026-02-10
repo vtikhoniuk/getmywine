@@ -70,9 +70,15 @@ class WineRepository:
         if with_image is True:
             query = query.where(Wine.image_url.isnot(None))
         if grape_variety is not None:
-            query = query.where(Wine.grape_varieties.contains([grape_variety]))
+            # Case-insensitive partial match (handles "Пино Нуар" vs "пино нуар 51%")
+            query = query.where(
+                func.array_to_string(Wine.grape_varieties, ',').ilike(f"%{grape_variety}%")
+            )
         if food_pairing is not None:
-            query = query.where(Wine.food_pairings.overlap([food_pairing]))
+            # Case-insensitive partial match for food pairings
+            query = query.where(
+                func.array_to_string(Wine.food_pairings, ',').ilike(f"%{food_pairing}%")
+            )
         if region is not None:
             query = query.where(Wine.region.ilike(f"%{region}%"))
 

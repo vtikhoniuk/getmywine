@@ -3,10 +3,10 @@
 TDD Red phase — these tests should FAIL until the new parameters are added
 to WineRepository.get_list().
 
-Filter implementations expected:
-- grape_variety -> Wine.grape_varieties.contains([value])  (ARRAY contains)
-- food_pairing  -> Wine.food_pairings.overlap([value])     (ARRAY overlap)
-- region        -> Wine.region.ilike(f'%{value}%')         (case-insensitive like)
+Filter implementations:
+- grape_variety -> array_to_string(grape_varieties, ',').ilike('%value%')
+- food_pairing  -> array_to_string(food_pairings, ',').ilike('%value%')
+- region        -> Wine.region.ilike(f'%{value}%')
 """
 
 from decimal import Decimal
@@ -275,6 +275,117 @@ class TestGetListNoResults:
 
 
 # ---------------------------------------------------------------------------
+# 6. Case-insensitive partial matching for grape_variety and food_pairing
+# ---------------------------------------------------------------------------
+class TestGetListCaseInsensitiveFilters:
+    """Tests verifying that grape_variety and food_pairing use ilike + array_to_string.
+
+    The LLM sends capitalized values (e.g. 'Пино Нуар') while the DB stores
+    lowercase with possible suffixes ('пино нуар 51%'). The filters must handle
+    both case mismatch and partial matching.
+    """
+
+    @staticmethod
+    def _compile_query(mock_session: AsyncMock) -> str:
+        """Extract and compile the SQLAlchemy query from mock execute call."""
+        from sqlalchemy.dialects import postgresql
+
+        query = mock_session.execute.call_args[0][0]
+        return str(query.compile(
+            dialect=postgresql.dialect(),
+            compile_kwargs={"literal_binds": True},
+        ))
+
+    @pytest.mark.asyncio
+    async def test_grape_variety_uses_ilike(self):
+        """grape_variety filter should use ILIKE for case-insensitive matching."""
+        mock_session = _make_mock_session()
+        repo = WineRepository(mock_session)
+
+        await repo.get_list(grape_variety="Пино Нуар")
+
+        compiled = self._compile_query(mock_session)
+        assert "ILIKE" in compiled
+
+    @pytest.mark.asyncio
+    async def test_grape_variety_uses_array_to_string(self):
+        """grape_variety should flatten the array with array_to_string before matching."""
+        mock_session = _make_mock_session()
+        repo = WineRepository(mock_session)
+
+        await repo.get_list(grape_variety="Мальбек")
+
+        compiled = self._compile_query(mock_session)
+        assert "array_to_string" in compiled
+
+    @pytest.mark.asyncio
+    async def test_grape_variety_wraps_value_with_wildcards(self):
+        """The search term should be wrapped with % wildcards for partial matching."""
+        mock_session = _make_mock_session()
+        repo = WineRepository(mock_session)
+
+        await repo.get_list(grape_variety="Каберне")
+
+        compiled = self._compile_query(mock_session)
+        assert "%Каберне%" in compiled
+
+    @pytest.mark.asyncio
+    async def test_food_pairing_uses_ilike(self):
+        """food_pairing filter should use ILIKE for case-insensitive matching."""
+        mock_session = _make_mock_session()
+        repo = WineRepository(mock_session)
+
+        await repo.get_list(food_pairing="Стейк")
+
+        compiled = self._compile_query(mock_session)
+        assert "ILIKE" in compiled
+
+    @pytest.mark.asyncio
+    async def test_food_pairing_uses_array_to_string(self):
+        """food_pairing should flatten the array with array_to_string before matching."""
+        mock_session = _make_mock_session()
+        repo = WineRepository(mock_session)
+
+        await repo.get_list(food_pairing="рыба")
+
+        compiled = self._compile_query(mock_session)
+        assert "array_to_string" in compiled
+
+    @pytest.mark.asyncio
+    async def test_food_pairing_wraps_value_with_wildcards(self):
+        """The search term should be wrapped with % wildcards for partial matching."""
+        mock_session = _make_mock_session()
+        repo = WineRepository(mock_session)
+
+        await repo.get_list(food_pairing="сыр")
+
+        compiled = self._compile_query(mock_session)
+        assert "%сыр%" in compiled
+
+    @pytest.mark.asyncio
+    async def test_grape_variety_no_contains_operator(self):
+        """grape_variety should NOT use @> (contains) — it is case-sensitive."""
+        mock_session = _make_mock_session()
+        repo = WineRepository(mock_session)
+
+        await repo.get_list(grape_variety="Пино Нуар")
+
+        compiled = self._compile_query(mock_session)
+        assert "@>" not in compiled
+
+    @pytest.mark.asyncio
+    async def test_food_pairing_no_overlap_operator(self):
+        """food_pairing should NOT use && (overlap) — it is case-sensitive."""
+        mock_session = _make_mock_session()
+        repo = WineRepository(mock_session)
+
+        await repo.get_list(food_pairing="Стейк")
+
+        compiled = self._compile_query(mock_session)
+        assert "&&" not in compiled
+
+
+# ---------------------------------------------------------------------------
 # T009: Tests for execute_search_wines() and format_tool_response()
 # TDD Red — functions don't exist yet, tests should FAIL with AttributeError/ImportError
 # ---------------------------------------------------------------------------
@@ -379,11 +490,12 @@ class TestExecuteSearchWines:
 
         result = await service.execute_search_wines(arguments)
 
-        call_kwargs = service.wine_repo.get_list.call_args.kwargs
+        # Check the FIRST call (before auto-broadening may retry without sweetness)
+        first_call_kwargs = service.wine_repo.get_list.call_args_list[0].kwargs
         # wine_type should NOT be in kwargs because "blue" is invalid
-        assert "wine_type" not in call_kwargs or call_kwargs.get("wine_type") is None
+        assert "wine_type" not in first_call_kwargs or first_call_kwargs.get("wine_type") is None
         # sweetness IS valid and should be passed
-        assert call_kwargs["sweetness"] == Sweetness.DRY
+        assert first_call_kwargs["sweetness"] == Sweetness.DRY
 
     @pytest.mark.asyncio
     async def test_execute_search_wines_price_min_gt_max_ignored(self):

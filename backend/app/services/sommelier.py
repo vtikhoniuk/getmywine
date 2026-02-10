@@ -442,9 +442,22 @@ class SommelierService:
                 )
                 return result
 
-            logger.warning("Agent loop returned None, using mock fallback")
+            logger.warning("Agent loop returned None, trying LLM without tools")
 
-        # Fallback to mock
+            # Fallback: regular LLM call with wines embedded in prompt
+            fallback = await self._generate_llm_with_catalog(
+                system_prompt=system_prompt,
+                user_message=user_message,
+                conversation_history=conversation_history,
+                user_profile=user_profile,
+                events_context=events_context,
+            )
+            if fallback is not None:
+                return fallback
+
+            logger.warning("LLM fallback also failed, using mock")
+
+        # Final fallback to mock (no LLM available at all)
         from app.services.ai_mock import MockAIService
         mock = MockAIService()
         return await mock.generate_response_with_context(
@@ -519,6 +532,77 @@ class SommelierService:
 
         return SommelierService._wines_available
 
+    async def _generate_llm_with_catalog(
+        self,
+        system_prompt: str,
+        user_message: str,
+        conversation_history: Optional[list[dict]] = None,
+        user_profile: Optional[dict] = None,
+        events_context: Optional[str] = None,
+    ) -> Optional[str]:
+        """Fallback: regular LLM call with wines embedded in the prompt.
+
+        Used when tool-use (generate_with_tools) is not supported by the
+        current LLM provider. Loads wines from the catalog and passes them
+        directly in the prompt, similar to the pre-agentic flow.
+        """
+        from app.services.sommelier_prompts import (
+            SYSTEM_PROMPT_BASE,
+            build_unified_user_prompt,
+        )
+
+        try:
+            wines = await self.wine_repo.get_list(limit=20, with_image=True)
+            if not wines:
+                wines = await self.wine_repo.get_list(limit=20)
+
+            wines_text = self._format_catalog_for_fallback(wines)
+
+            user_prompt = build_unified_user_prompt(
+                user_message=user_message,
+                user_profile=user_profile,
+                events_context=events_context,
+            )
+            user_prompt += f"\n\nКАТАЛОГ ВИН ДЛЯ РЕКОМЕНДАЦИИ:\n{wines_text}"
+
+            # Build history
+            history = None
+            if conversation_history:
+                from app.services.llm import ChatMessage
+                history = [
+                    ChatMessage(role=m["role"], content=m["content"])
+                    for m in conversation_history
+                ]
+
+            result = await self.llm_service.generate(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                history=history,
+            )
+            logger.info("Generated LLM fallback response (no tools)")
+            return result
+
+        except Exception as e:
+            logger.exception("LLM fallback with catalog also failed: %s", e)
+            return None
+
+    @staticmethod
+    def _format_catalog_for_fallback(wines: list[Wine]) -> str:
+        """Format wines for inclusion in fallback prompt."""
+        lines = []
+        for wine in wines:
+            grapes = ", ".join(wine.grape_varieties) if wine.grape_varieties else ""
+            pairings = ", ".join(wine.food_pairings[:3]) if wine.food_pairings else ""
+            line = (
+                f"- {wine.name} | {wine.producer} | {wine.country}, {wine.region} | "
+                f"{wine.wine_type.value}, {wine.sweetness.value} | "
+                f"{wine.price_rub}₽ | Сорта: {grapes} | К блюдам: {pairings}"
+            )
+            if wine.description:
+                line += f" | {wine.description[:80]}"
+            lines.append(line)
+        return "\n".join(lines)
+
     async def execute_search_wines(self, arguments: dict) -> str:
         """Execute search_wines tool: map arguments to WineRepository.get_list().
 
@@ -570,6 +654,34 @@ class SommelierService:
             filters_applied["price_min"] = price_min
 
         wines = await self.wine_repo.get_list(**filters)
+
+        # Progressive auto-broadening: drop filters in order of priority until results found
+        # Step 1: drop wine_type/sweetness (LLM often guesses these)
+        # Step 2: also drop country (catalog may not have wines from requested country)
+        _BROADENING_STEPS = [
+            ("wine_type", "sweetness"),
+            ("country",),
+        ]
+        if not wines:
+            current = dict(filters)
+            all_dropped: list[str] = []
+            for drop_keys in _BROADENING_STEPS:
+                droppable = [k for k in drop_keys if k in current]
+                if not droppable:
+                    continue
+                for k in droppable:
+                    current.pop(k)
+                    all_dropped.append(k)
+                wines = await self.wine_repo.get_list(**current)
+                if wines:
+                    logger.info(
+                        "search_wines: broadened search (dropped %s), found=%d",
+                        all_dropped, len(wines),
+                    )
+                    for k in all_dropped:
+                        filters_applied.pop(k, None)
+                    filters_applied["broadened"] = True
+                    break
 
         logger.info("search_wines tool: filters=%s, found=%d", filters_applied, len(wines))
 
@@ -702,7 +814,7 @@ class SommelierService:
             return response.content
 
         except Exception as e:
-            logger.warning("Agent loop error: %s", e)
+            logger.exception("Agent loop error (tool use may not be supported): %s", e)
             return None
 
 

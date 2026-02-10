@@ -6,6 +6,7 @@ to eliminate duplication (DRY).
 
 import io
 import logging
+import re
 from pathlib import Path
 
 from PIL import Image
@@ -15,6 +16,11 @@ from app.bot.formatters import format_wine_photo_caption
 from app.bot.utils import get_wine_image_path, sanitize_telegram_markdown
 from app.config import get_settings
 from app.services.sommelier_prompts import parse_structured_response, strip_markdown
+
+# Pattern to strip [INTRO], [/INTRO], [WINE:1], [/WINE:1], [CLOSING], [/CLOSING], [GUARD:*]
+_SECTION_MARKERS_RE = re.compile(
+    r"\[/?(?:INTRO|WINE:\d+|CLOSING|GUARD:\w+)\]", re.IGNORECASE
+)
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +74,18 @@ async def send_wine_recommendations(
     if not parsed.is_structured:
         return False
 
+    # No wine sections → combine intro + closing into a single message
+    if not parsed.wines:
+        parts = [parsed.intro]
+        if parsed.closing:
+            parts.append(parsed.closing)
+        combined = "\n\n".join(parts)
+        await update.message.reply_text(
+            sanitize_telegram_markdown(combined),
+            parse_mode="Markdown",
+        )
+        return True
+
     # 1. Intro
     await update.message.reply_text(
         sanitize_telegram_markdown(parsed.intro),
@@ -80,11 +98,12 @@ async def send_wine_recommendations(
         image_path = get_wine_image_path(wine) if wine else None
 
         if image_path:
-            caption = strip_markdown(wine_text)[:1024]
+            caption = sanitize_telegram_markdown(wine_text)[:1024]
             photo_buf = prepare_wine_photo(image_path)
             await update.message.reply_photo(
                 photo=InputFile(photo_buf, filename="wine.png"),
                 caption=caption,
+                parse_mode="Markdown",
             )
         else:
             await update.message.reply_text(
@@ -112,8 +131,10 @@ async def send_fallback_response(
 
     Used when structured parsing fails (is_structured=False).
     """
+    # Strip any leftover section markers so tags aren't visible to user
+    clean_text = _SECTION_MARKERS_RE.sub("", response_text).strip()
     await update.message.reply_text(
-        sanitize_telegram_markdown(response_text),
+        sanitize_telegram_markdown(clean_text),
         parse_mode="Markdown",
     )
 
