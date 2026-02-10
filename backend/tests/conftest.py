@@ -9,6 +9,12 @@ from typing import AsyncGenerator, Generator
 
 import pytest
 import pytest_asyncio
+
+
+def pytest_configure(config):
+    """Register custom markers."""
+    config.addinivalue_line("markers", "eval: golden query evaluation tests (require OPENROUTER_API_KEY + PostgreSQL)")
+
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import StaticPool
