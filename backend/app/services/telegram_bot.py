@@ -297,24 +297,18 @@ class TelegramBotService:
     ) -> list[Wine]:
         """Extract wines mentioned in the LLM response by matching names.
 
-        Tries multiple matching strategies since LLM may not use exact
-        catalog names:
-        1. Full wine.name match
-        2. Name without "Вино " prefix
-        3. Core name (without prefix and vintage year)
+        Uses direct name matching: after normalization, wine.name contains
+        exactly the name the LLM is instructed to use ("ТОЧНО как в каталоге").
 
         Args:
             response_text: LLM-generated response text
             max_wines: Maximum number of wines to return
 
         Returns:
-            List of matched Wine objects
+            List of matched Wine objects, ordered by position in text
         """
-        import re
-
         all_wines = await self.wine_repo.get_list(limit=100)
 
-        # Find wines whose name appears in the response, track position
         found: list[tuple[int, Wine]] = []
         found_ids: set = set()
 
@@ -322,26 +316,10 @@ class TelegramBotService:
             if wine.id in found_ids:
                 continue
 
-            # Build candidate search strings from most to least specific
-            candidates = [wine.name]
+            pos = response_text.find(wine.name)
+            if pos != -1:
+                found.append((pos, wine))
+                found_ids.add(wine.id)
 
-            # Without "Вино " prefix
-            no_prefix = re.sub(r"^Вино\s+", "", wine.name)
-            if no_prefix != wine.name:
-                candidates.append(no_prefix)
-
-            # Core name: without prefix and vintage year
-            core = re.sub(r",?\s*\d{4}\s*$", "", no_prefix)
-            if core != no_prefix and len(core) >= 5:
-                candidates.append(core)
-
-            for candidate in candidates:
-                pos = response_text.find(candidate)
-                if pos != -1:
-                    found.append((pos, wine))
-                    found_ids.add(wine.id)
-                    break
-
-        # Sort by appearance order in text
         found.sort(key=lambda x: x[0])
         return [wine for _, wine in found[:max_wines]]
