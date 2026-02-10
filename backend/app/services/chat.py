@@ -1,5 +1,6 @@
 """Chat service for managing conversations and messages."""
 import logging
+import re
 import uuid
 from typing import Optional
 
@@ -18,6 +19,7 @@ from app.services.sommelier import (
     detect_event,
     detect_food,
 )
+from app.services.sommelier_prompts import parse_structured_response
 
 logger = logging.getLogger(__name__)
 
@@ -272,6 +274,19 @@ class ChatService:
             user_profile=user_profile,
             conversation_history=history,
         )
+
+        # Check for guard markers and log if present
+        parsed = parse_structured_response(ai_response_content)
+        if parsed.guard_type:
+            logger.warning(
+                "GUARD_ALERT type=%s user_id=%s message=\"%s\"",
+                parsed.guard_type,
+                user_id,
+                content[:100],
+            )
+            ai_response_content = re.sub(
+                r"\[GUARD:\w+\]\s*", "", ai_response_content
+            )
 
         # Save AI response
         ai_message = await self.message_repo.create(

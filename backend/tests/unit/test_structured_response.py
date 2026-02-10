@@ -98,6 +98,88 @@ class TestParseStructuredResponse:
 
 
 # ---------------------------------------------------------------------------
+# T001-T005: [GUARD] marker parsing
+# ---------------------------------------------------------------------------
+
+
+class TestGuardMarkerParsing:
+    """Tests for [GUARD:type] marker extraction from LLM responses."""
+
+    def test_guard_off_topic_before_structured_response(self):
+        """[GUARD:off_topic] before structured content → guard_type='off_topic', is_structured=True."""
+        text = (
+            "[GUARD:off_topic]\n"
+            "[INTRO]\nЯ специализируюсь на вине!\n[/INTRO]\n"
+            "[WINE:1]\nВино 1\n[/WINE:1]\n"
+            "[CLOSING]\nДавайте подберём вино?\n[/CLOSING]"
+        )
+        parsed = parse_structured_response(text)
+
+        assert parsed.guard_type == "off_topic"
+        assert parsed.is_structured is True
+        assert "специализируюсь на вине" in parsed.intro
+
+    def test_guard_prompt_injection_parsed(self):
+        """[GUARD:prompt_injection] → guard_type='prompt_injection'."""
+        text = (
+            "[GUARD:prompt_injection]\n"
+            "[INTRO]\nЯ винный сомелье Винни.\n[/INTRO]\n"
+            "[WINE:1]\nОтличный Мальбек\n[/WINE:1]\n"
+            "[CLOSING]\nЧто подобрать?\n[/CLOSING]"
+        )
+        parsed = parse_structured_response(text)
+
+        assert parsed.guard_type == "prompt_injection"
+        assert parsed.is_structured is True
+
+    def test_guard_social_engineering_parsed(self):
+        """[GUARD:social_engineering] → guard_type='social_engineering'."""
+        text = (
+            "[GUARD:social_engineering]\n"
+            "[INTRO]\nЯ сомелье и помогу с вином.\n[/INTRO]\n"
+            "[WINE:1]\nРислинг\n[/WINE:1]\n"
+            "[CLOSING]\nКакое вино вас интересует?\n[/CLOSING]"
+        )
+        parsed = parse_structured_response(text)
+
+        assert parsed.guard_type == "social_engineering"
+        assert parsed.is_structured is True
+
+    def test_no_guard_marker_returns_none(self):
+        """Standard response without [GUARD] → guard_type=None."""
+        text = (
+            "[INTRO]\nОбычный ответ\n[/INTRO]\n"
+            "[WINE:1]\nВино\n[/WINE:1]\n"
+            "[CLOSING]\nВопрос?\n[/CLOSING]"
+        )
+        parsed = parse_structured_response(text)
+
+        assert parsed.guard_type is None
+        assert parsed.is_structured is True
+
+    def test_guard_does_not_break_intro_wine_closing(self):
+        """[GUARD:off_topic] + full response → all fields parsed correctly."""
+        text = (
+            "[GUARD:off_topic]\n"
+            "[INTRO]\nВот три варианта для вас!\n[/INTRO]\n"
+            "[WINE:1]\n**Château Margaux** — великолепное бордо\n[/WINE:1]\n"
+            "[WINE:2]\n**Cloudy Bay** — новозеландский совиньон\n[/WINE:2]\n"
+            "[WINE:3]\n**Barolo** — итальянская классика\n[/WINE:3]\n"
+            "[CLOSING]\nХотите уточнить предпочтения?\n[/CLOSING]"
+        )
+        parsed = parse_structured_response(text)
+
+        assert parsed.guard_type == "off_topic"
+        assert parsed.is_structured is True
+        assert "Вот три варианта" in parsed.intro
+        assert len(parsed.wines) == 3
+        assert "Château Margaux" in parsed.wines[0]
+        assert "Cloudy Bay" in parsed.wines[1]
+        assert "Barolo" in parsed.wines[2]
+        assert "уточнить" in parsed.closing
+
+
+# ---------------------------------------------------------------------------
 # T003: strip_markdown()
 # ---------------------------------------------------------------------------
 
