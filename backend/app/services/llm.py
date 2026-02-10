@@ -40,6 +40,26 @@ class BaseLLMService(ABC):
         """Generate a response from the LLM."""
         pass
 
+    async def generate_with_tools(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        tools: list[dict],
+        messages: Optional[list[dict]] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ):
+        """Generate a response with tool use support. Returns full message object."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support tool use"
+        )
+
+    async def get_query_embedding(self, query: str) -> list[float]:
+        """Generate embedding for a query string."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support embeddings"
+        )
+
 
 class OpenRouterService(BaseLLMService):
     """OpenRouter LLM service - access multiple models via OpenAI-compatible API."""
@@ -113,6 +133,60 @@ class OpenRouterService(BaseLLMService):
         except Exception as e:
             logger.error("OpenRouter API error: %s", e)
             raise LLMError(f"Failed to generate response: {e}") from e
+
+    async def generate_with_tools(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        tools: list[dict],
+        messages: Optional[list[dict]] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ):
+        """Generate response with tool use via OpenRouter."""
+        settings = get_settings()
+        temp = temperature if temperature is not None else settings.llm_temperature
+        tokens = max_tokens if max_tokens is not None else settings.llm_max_tokens
+
+        if messages is not None:
+            api_messages = list(messages)
+        else:
+            api_messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ]
+
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                temperature=temp,
+                max_tokens=tokens,
+                messages=api_messages,
+                tools=tools,
+                extra_headers={
+                    "HTTP-Referer": "https://getmywine.local",
+                    "X-Title": "GetMyWine",
+                },
+            )
+            return response.choices[0].message
+
+        except Exception as e:
+            logger.error("OpenRouter API error (tool use): %s", e)
+            raise LLMError(f"Failed to generate response with tools: {e}") from e
+
+    async def get_query_embedding(self, query: str) -> list[float]:
+        """Generate embedding for a query using OpenAI embeddings API."""
+        settings = get_settings()
+        try:
+            response = await self.client.embeddings.create(
+                model=settings.embedding_model,
+                input=query,
+            )
+            return response.data[0].embedding
+
+        except Exception as e:
+            logger.error("Embeddings API error: %s", e)
+            raise LLMError(f"Failed to generate embedding: {e}") from e
 
 
 class AnthropicService(BaseLLMService):
@@ -362,6 +436,39 @@ class LLMService:
             temperature=temperature,
             max_tokens=max_tokens,
         )
+
+    async def generate_with_tools(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        tools: list[dict],
+        messages: Optional[list[dict]] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ):
+        """Generate LLM response with tool use support."""
+        self._initialize()
+
+        if not self._provider:
+            raise LLMError("No LLM provider configured")
+
+        return await self._provider.generate_with_tools(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            tools=tools,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+
+    async def get_query_embedding(self, query: str) -> list[float]:
+        """Generate embedding for a query string."""
+        self._initialize()
+
+        if not self._provider:
+            raise LLMError("No LLM provider configured")
+
+        return await self._provider.get_query_embedding(query)
 
     async def generate_wine_recommendation(
         self,

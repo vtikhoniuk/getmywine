@@ -7,7 +7,6 @@ from typing import Optional
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
-    ARRAY,
     CheckConstraint,
     DateTime,
     Enum,
@@ -17,7 +16,7 @@ from sqlalchemy import (
     Text,
     func,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base

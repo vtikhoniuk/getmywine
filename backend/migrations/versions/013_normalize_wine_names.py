@@ -13,6 +13,7 @@ This is an irreversible data migration (downgrade is a no-op).
 
 from typing import Sequence, Union
 
+import sqlalchemy as sa
 from alembic import op
 
 from app.utils.wine_normalization import normalize_wine_name
@@ -28,7 +29,7 @@ def upgrade() -> None:
     conn = op.get_bind()
 
     rows = conn.execute(
-        conn.engine.text(
+        sa.text(
             "SELECT id, name, producer, vintage_year FROM wines"
         )
     ).fetchall()
@@ -40,7 +41,7 @@ def upgrade() -> None:
 
         if new_name != old_name:
             conn.execute(
-                conn.engine.text(
+                sa.text(
                     "UPDATE wines SET name = :name WHERE id = :id"
                 ),
                 {"name": new_name, "id": wine_id},

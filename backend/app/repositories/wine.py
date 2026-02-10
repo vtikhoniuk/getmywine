@@ -45,6 +45,9 @@ class WineRepository:
         body_min: Optional[int] = None,
         body_max: Optional[int] = None,
         with_image: Optional[bool] = None,
+        grape_variety: Optional[str] = None,
+        food_pairing: Optional[str] = None,
+        region: Optional[str] = None,
     ) -> list[Wine]:
         """Get list of wines with optional filters."""
         query = select(Wine)
@@ -66,6 +69,12 @@ class WineRepository:
             query = query.where(Wine.body <= body_max)
         if with_image is True:
             query = query.where(Wine.image_url.isnot(None))
+        if grape_variety is not None:
+            query = query.where(Wine.grape_varieties.contains([grape_variety]))
+        if food_pairing is not None:
+            query = query.where(Wine.food_pairings.overlap([food_pairing]))
+        if region is not None:
+            query = query.where(Wine.region.ilike(f"%{region}%"))
 
         # Apply pagination
         query = query.order_by(Wine.created_at.desc())

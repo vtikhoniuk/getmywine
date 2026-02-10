@@ -1142,7 +1142,7 @@
       "grape_varieties": [
         "глера 100%"
       ],
-      "wine_type": "white",
+      "wine_type": "sparkling",
       "sweetness": "dry",
       "acidity": 3,
       "tannins": 1,
@@ -1169,7 +1169,7 @@
       "grape_varieties": [
         "глера 100%"
       ],
-      "wine_type": "white",
+      "wine_type": "sparkling",
       "sweetness": "dry",
       "acidity": 3,
       "tannins": 1,
@@ -1194,8 +1194,8 @@
       "grape_varieties": [
         "мускат 100%"
       ],
-      "wine_type": "white",
-      "sweetness": "dry",
+      "wine_type": "sparkling",
+      "sweetness": "sweet",
       "acidity": 3,
       "tannins": 1,
       "body": 2,
@@ -1222,7 +1222,7 @@
         "пино нуар 51%",
         "пино менье 15%"
       ],
-      "wine_type": "white",
+      "wine_type": "sparkling",
       "sweetness": "dry",
       "acidity": 4,
       "tannins": 1,
@@ -1251,7 +1251,7 @@
         "рислинг рейнский",
         "пино блан"
       ],
-      "wine_type": "white",
+      "wine_type": "sparkling",
       "sweetness": "dry",
       "acidity": 3,
       "tannins": 1,
@@ -1333,7 +1333,7 @@
       "grape_varieties": [
         "шардоне 100%"
       ],
-      "wine_type": "white",
+      "wine_type": "sparkling",
       "sweetness": "dry",
       "acidity": 3,
       "tannins": 1,

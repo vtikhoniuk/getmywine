@@ -174,6 +174,8 @@
 - Python 3.12+ + FastAPI, SQLAlchemy 2.0, Alembic, python-telegram-bot 21.x, Pillow, openai (embeddings) (013-normalize-wine-names)
 - PostgreSQL 16 + pgvector (HNSW index, cosine distance) (013-normalize-wine-names)
 - PostgreSQL 16 + pgvector (без изменений схемы) (014-prompt-guard)
+- Python 3.12+ + FastAPI, SQLAlchemy 2.0, python-telegram-bot 21.x, OpenAI SDK (для OpenRouter API), pgvector (015-agentic-rag)
+- PostgreSQL 16 + pgvector (существующая БД, 50 вин с эмбеддингами 1536 dims) (015-agentic-rag)
 
 ## Recent Changes
 - 002-chat-welcome: Added Python 3.12+ + FastAPI, SQLAlchemy 2.0, Jinja2, HTMX

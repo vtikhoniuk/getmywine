@@ -4,6 +4,7 @@ Combines proactive suggestions, prompts, wine catalog, LLM, and real events
 for intelligent wine recommendations.
 """
 
+import json
 import logging
 from datetime import datetime
 from typing import Optional
@@ -23,13 +24,6 @@ from app.services.sommelier_prompts import (
     SYSTEM_PROMPT_COLD_START,
     SYSTEM_PROMPT_CONTINUATION,
     SYSTEM_PROMPT_PERSONALIZED,
-    PROMPT_PROACTIVE_COLD_START,
-    PROMPT_PROACTIVE_PERSONALIZED,
-    PROMPT_EVENT_RECOMMENDATION,
-    PROMPT_FOOD_PAIRING,
-    format_wine_catalog_for_prompt,
-    format_user_profile_for_prompt,
-    get_pairing_hint,
 )
 from app.services.events import EventsService, get_events_service, Event
 from app.services.llm import LLMService, get_llm_service, LLMError
@@ -396,7 +390,10 @@ class SommelierService:
         is_continuation: bool = False,
     ) -> str:
         """
-        Generate AI response to user message using LLM with conversation history.
+        Generate AI response to user message using agentic RAG with tool use.
+
+        The LLM decides which tools to call (search_wines, semantic_search)
+        based on the user's message. Replaces the previous 4-path routing.
 
         Args:
             user_message: User's message
@@ -404,103 +401,56 @@ class SommelierService:
             conversation_history: Previous messages for context
                 Format: [{"role": "user"|"assistant", "content": "..."}]
             cross_session_context: Context from previous sessions
+            is_continuation: Whether this continues an existing conversation
 
         Returns:
             AI response string
         """
-        from app.services.llm import ChatMessage
+        from app.services.sommelier_prompts import SYSTEM_PROMPT_AGENTIC
 
-        # Detect context
-        detected_event = detect_event(user_message)
-        detected_food = detect_food(user_message)
-
-        # Get prompt data
-        if detected_event:
-            prompt_data = await self.get_llm_prompt_for_event(
-                user_message=user_message,
-                event=detected_event,
-                food=detected_food,
-                user_profile=user_profile,
-            )
-        elif detected_food:
-            prompt_data = await self.get_llm_prompt_for_food_pairing(
-                user_message=user_message,
-                food_item=detected_food,
-                user_profile=user_profile,
-            )
-        else:
-            # Generic request
-            if user_profile:
-                prompt_data = await self.get_llm_prompt_for_personalized(
-                    user_profile=user_profile,
-                )
-            else:
-                prompt_data = await self.get_llm_prompt_for_cold_start()
-
-        # Add real events context
+        # Build events context
         day_context = self.events_service.get_day_context()
         events_context = self._format_events_for_prompt(day_context)
 
-        # Build cross-session history text
-        history_text = ""
-        history_instruction = ""
+        # Enrich events context with cross-session data
         if cross_session_context and cross_session_context.total_sessions > 0:
-            history_text = f"\n\n{cross_session_context.to_prompt_text()}"
+            events_context += f"\n\n{cross_session_context.to_prompt_text()}"
             history_instruction = self._get_history_instruction(cross_session_context)
             if history_instruction:
-                history_instruction = f"\n\n{history_instruction}"
+                events_context += f"\n\n{history_instruction}"
 
-        # Enhance user prompt with events
-        enhanced_prompt = f"""ТЕКУЩИЙ КОНТЕКСТ:
-{events_context}{history_text}
-
-ЗАПРОС ПОЛЬЗОВАТЕЛЯ:
-{user_message}{history_instruction}
-
----
-
-{prompt_data['user_prompt']}"""
-
-        # Convert conversation history to ChatMessage format
-        history: Optional[list[ChatMessage]] = None
-        if conversation_history:
-            history = [
-                ChatMessage(role=msg["role"], content=msg["content"])
-                for msg in conversation_history
-                if msg.get("role") in ("user", "assistant")
-            ]
-            logger.debug("Using %d messages from conversation history", len(history))
-
-        # Append continuation instruction when not the first message
-        system_prompt = prompt_data["system_prompt"]
+        # Build system prompt
+        system_prompt = SYSTEM_PROMPT_AGENTIC
         if is_continuation:
             system_prompt += SYSTEM_PROMPT_CONTINUATION
 
-        # Try LLM, fallback to mock
+        # Try agentic response
         if self.llm_service.is_available:
-            try:
-                response = await self.llm_service.generate_wine_recommendation(
-                    system_prompt=system_prompt,
-                    user_prompt=enhanced_prompt,
-                    history=history,
-                )
-                logger.info(
-                    "Generated LLM response for: %s (history: %d msgs)",
-                    user_message[:50],
-                    len(history) if history else 0,
-                )
-                return response
+            result = await self.generate_agentic_response(
+                system_prompt=system_prompt,
+                user_message=user_message,
+                conversation_history=conversation_history,
+                user_profile=user_profile,
+                events_context=events_context,
+            )
 
-            except LLMError as e:
-                logger.warning("LLM failed, using mock: %s", e)
+            if result is not None:
+                logger.info(
+                    "Generated agentic response for: %s (history: %d msgs)",
+                    user_message[:50],
+                    len(conversation_history) if conversation_history else 0,
+                )
+                return result
+
+            logger.warning("Agent loop returned None, using mock fallback")
 
         # Fallback to mock
         from app.services.ai_mock import MockAIService
         mock = MockAIService()
         return await mock.generate_response_with_context(
             user_message=user_message,
-            detected_event=detected_event,
-            detected_food=detected_food,
+            detected_event=detect_event(user_message),
+            detected_food=detect_food(user_message),
         )
 
     async def _find_wine_for_suggestion(
@@ -524,12 +474,12 @@ class SommelierService:
         if suggestion.price_range:
             from app.models.wine import PriceRange
             if suggestion.price_range == PriceRange.BUDGET:
-                filters["price_max"] = 30
+                filters["price_max"] = 1500
             elif suggestion.price_range == PriceRange.MID:
-                filters["price_min"] = 30
-                filters["price_max"] = 100
+                filters["price_min"] = 1500
+                filters["price_max"] = 5000
             elif suggestion.price_range == PriceRange.PREMIUM:
-                filters["price_min"] = 100
+                filters["price_min"] = 5000
 
         # Apply user profile preferences
         if user_profile:
@@ -569,194 +519,270 @@ class SommelierService:
 
         return SommelierService._wines_available
 
-    async def get_llm_prompt_for_cold_start(self) -> dict:
+    async def execute_search_wines(self, arguments: dict) -> str:
+        """Execute search_wines tool: map arguments to WineRepository.get_list().
+
+        Validates enum values (invalid silently ignored), handles price logic,
+        and returns formatted JSON response.
         """
-        Get complete LLM prompt for cold start scenario.
+        from app.models.wine import Sweetness, WineType
 
-        Returns system prompt and user prompt with wine catalog.
-        """
-        now = datetime.now()
-        ctx = self.suggestion_engine.build_context(now, user_has_profile=False)
-        suggestions = self.suggestion_engine.generate_suggestions(ctx)
-
-        # Get diverse wine selection for catalog
-        wines = await self.wine_repo.get_list(limit=20)
-        catalog_text = format_wine_catalog_for_prompt(wines)
-
-        # Build context strings
-        day_names_ru = {
-            0: "Понедельник", 1: "Вторник", 2: "Среда",
-            3: "Четверг", 4: "Пятница", 5: "Суббота", 6: "Воскресенье"
-        }
-        season_names_ru = {
-            "winter": "Зима", "spring": "Весна",
-            "summer": "Лето", "autumn": "Осень"
-        }
-        time_of_day = "вечер" if 17 <= now.hour <= 23 else (
-            "утро" if 6 <= now.hour <= 11 else "день"
-        )
-
-        user_prompt = PROMPT_PROACTIVE_COLD_START.format(
-            current_date=now.strftime("%d.%m.%Y"),
-            day_of_week=day_names_ru[now.weekday()],
-            season=season_names_ru[ctx.season.value],
-            upcoming_holiday=ctx.upcoming_holiday.name if ctx.upcoming_holiday else "нет",
-            days_until=ctx.days_until_holiday if ctx.upcoming_holiday else "—",
-            time_of_day=time_of_day,
-            season_hook=suggestions[0].hook if suggestions else "",
-            holiday_hook=suggestions[1].hook if len(suggestions) > 1 and ctx.upcoming_holiday else "—",
-            event_hook=suggestions[1].hook if len(suggestions) > 1 else "",
-            wine_catalog=catalog_text,
-        )
-
-        return {
-            "system_prompt": SYSTEM_PROMPT_COLD_START,
-            "user_prompt": user_prompt,
-            "context": ctx,
-            "wines_in_prompt": len(wines),
-        }
-
-    async def get_llm_prompt_for_personalized(
-        self,
-        user_profile: dict,
-        user_name: str = "пользователь",
-        liked_wines: Optional[list[str]] = None,
-        disliked_wines: Optional[list[str]] = None,
-    ) -> dict:
-        """
-        Get complete LLM prompt for personalized recommendations.
-
-        Args:
-            user_profile: User's taste profile
-            user_name: User's name
-            liked_wines: List of wine names user liked
-            disliked_wines: List of wine names user disliked
-
-        Returns system prompt and user prompt with filtered catalog.
-        """
-        now = datetime.now()
-        ctx = self.suggestion_engine.build_context(now, user_has_profile=True)
-
-        # Filter wines based on profile
         filters = {}
-        if user_profile.get("preferred_sweetness"):
-            filters["sweetness"] = user_profile["preferred_sweetness"]
-        if user_profile.get("budget_max"):
-            filters["price_max"] = user_profile["budget_max"]
+        filters_applied = {}
 
-        wines = await self.wine_repo.get_list(limit=20, **filters)
-        catalog_text = format_wine_catalog_for_prompt(wines)
+        # Map wine_type enum
+        wine_type_str = arguments.get("wine_type")
+        if wine_type_str:
+            try:
+                filters["wine_type"] = WineType(wine_type_str)
+                filters_applied["wine_type"] = wine_type_str
+            except ValueError:
+                pass  # Invalid enum value, silently ignore
 
-        day_names_ru = {
-            0: "Понедельник", 1: "Вторник", 2: "Среда",
-            3: "Четверг", 4: "Пятница", 5: "Суббота", 6: "Воскресенье"
-        }
-        season_names_ru = {
-            "winter": "Зима", "spring": "Весна",
-            "summer": "Лето", "autumn": "Осень"
-        }
+        # Map sweetness enum
+        sweetness_str = arguments.get("sweetness")
+        if sweetness_str:
+            try:
+                filters["sweetness"] = Sweetness(sweetness_str)
+                filters_applied["sweetness"] = sweetness_str
+            except ValueError:
+                pass
 
-        user_prompt = PROMPT_PROACTIVE_PERSONALIZED.format(
-            user_name=user_name,
-            sweetness_pref=user_profile.get("sweetness_pref", "не указано"),
-            body_pref=user_profile.get("body_pref", "не указано"),
-            favorite_regions=", ".join(user_profile.get("favorite_regions", [])) or "не указано",
-            dislikes=", ".join(user_profile.get("dislikes", [])) or "нет",
-            budget_range=user_profile.get("budget", "не указан"),
-            liked_wines=", ".join(liked_wines or []) or "пока нет",
-            disliked_wines=", ".join(disliked_wines or []) or "пока нет",
-            current_date=now.strftime("%d.%m.%Y"),
-            day_of_week=day_names_ru[now.weekday()],
-            season=season_names_ru[ctx.season.value],
-            upcoming_holiday=ctx.upcoming_holiday.name if ctx.upcoming_holiday else "нет",
-            filtered_catalog=catalog_text,
-        )
+        # Pass through string filters
+        for key in ("country", "region", "grape_variety", "food_pairing"):
+            value = arguments.get(key)
+            if value:
+                filters[key] = value
+                filters_applied[key] = value
 
-        return {
-            "system_prompt": SYSTEM_PROMPT_PERSONALIZED,
-            "user_prompt": user_prompt,
-            "context": ctx,
-            "wines_in_prompt": len(wines),
-        }
+        # Handle price range
+        price_min = arguments.get("price_min")
+        price_max = arguments.get("price_max")
 
-    async def get_llm_prompt_for_event(
+        if price_min is not None and price_max is not None and price_min > price_max:
+            price_min = None  # Drop invalid price_min
+
+        if price_max is not None:
+            filters["price_max"] = price_max
+            filters_applied["price_max"] = price_max
+        if price_min is not None:
+            filters["price_min"] = price_min
+            filters_applied["price_min"] = price_min
+
+        wines = await self.wine_repo.get_list(**filters)
+
+        logger.info("search_wines tool: filters=%s, found=%d", filters_applied, len(wines))
+
+        return format_tool_response(wines, filters_applied)
+
+    async def execute_semantic_search(self, arguments: dict) -> str:
+        """Execute semantic_search tool: embed query and search via pgvector.
+
+        Generates embedding for the query text, calls WineRepository.semantic_search()
+        with optional filters (wine_type, price_max), and returns formatted JSON response
+        with similarity scores.
+        """
+        from app.models.wine import WineType
+
+        query = arguments.get("query", "")
+        filters_applied = {"query": query}
+
+        # Generate embedding for user's query
+        embedding = await self.llm_service.get_query_embedding(query)
+
+        # Build optional filters
+        search_kwargs: dict = {}
+
+        wine_type_str = arguments.get("wine_type")
+        if wine_type_str:
+            try:
+                search_kwargs["wine_type"] = WineType(wine_type_str)
+                filters_applied["wine_type"] = wine_type_str
+            except ValueError:
+                pass
+
+        price_max = arguments.get("price_max")
+        if price_max is not None:
+            search_kwargs["price_max"] = price_max
+            filters_applied["price_max"] = price_max
+
+        results = await self.wine_repo.semantic_search(embedding, **search_kwargs)
+
+        logger.info("semantic_search tool: query=%r, found=%d", query[:50], len(results))
+
+        return format_semantic_response(results, filters_applied)
+
+    async def generate_agentic_response(
         self,
+        system_prompt: str,
         user_message: str,
-        event: str,
-        food: Optional[str] = None,
-        guest_count: Optional[int] = None,
+        conversation_history: Optional[list[dict]] = None,
         user_profile: Optional[dict] = None,
-    ) -> dict:
+        events_context: Optional[str] = None,
+    ) -> Optional[str]:
+        """Agent loop: LLM -> tool_calls -> execute -> repeat (max iterations).
+
+        Returns the final text content from LLM, or None on error (caller handles fallback).
         """
-        Get LLM prompt for event-based recommendation.
+        from app.config import get_settings
+        from app.services.sommelier_prompts import WINE_TOOLS, build_unified_user_prompt
 
-        Args:
-            user_message: Original user message
-            event: Detected event type
-            food: Detected food/dish (if any)
-            guest_count: Number of guests (if mentioned)
-            user_profile: User's taste profile
+        settings = get_settings()
+        max_iterations = settings.agent_max_iterations
 
-        Returns system prompt and user prompt.
-        """
-        wines = await self.wine_repo.get_list(limit=20)
-        catalog_text = format_wine_catalog_for_prompt(wines)
-        profile_text = format_user_profile_for_prompt(user_profile)
-
-        user_prompt = PROMPT_EVENT_RECOMMENDATION.format(
+        # Build user prompt with context
+        user_prompt = build_unified_user_prompt(
             user_message=user_message,
-            detected_event=event,
-            detected_food=food or "не указано",
-            guest_count=guest_count or "не указано",
-            special_requirements="нет",
-            user_profile=profile_text,
-            wine_catalog=catalog_text,
+            user_profile=user_profile,
+            events_context=events_context,
         )
 
-        system = SYSTEM_PROMPT_PERSONALIZED if user_profile else SYSTEM_PROMPT_COLD_START
+        # Build initial messages
+        messages: list[dict] = [{"role": "system", "content": system_prompt}]
+        if conversation_history:
+            messages.extend(conversation_history)
+        messages.append({"role": "user", "content": user_prompt})
 
-        return {
-            "system_prompt": system,
-            "user_prompt": user_prompt,
-            "wines_in_prompt": len(wines),
+        try:
+            iteration = 0
+            while iteration < max_iterations:
+                response = await self.llm_service.generate_with_tools(
+                    system_prompt=system_prompt,
+                    user_prompt=user_prompt,
+                    tools=WINE_TOOLS,
+                    messages=messages,
+                )
+
+                # No tool calls — return content directly
+                if not response.tool_calls:
+                    return response.content
+
+                # Append assistant message with tool_calls as a dict
+                assistant_msg = {"role": "assistant", "content": response.content}
+                assistant_msg["tool_calls"] = [
+                    {
+                        "id": tc.id,
+                        "type": tc.type,
+                        "function": {
+                            "name": tc.function.name,
+                            "arguments": tc.function.arguments,
+                        },
+                    }
+                    for tc in response.tool_calls
+                ]
+                messages.append(assistant_msg)
+
+                # Execute each tool call and append results
+                for tool_call in response.tool_calls:
+                    name = tool_call.function.name
+                    arguments = json.loads(tool_call.function.arguments)
+
+                    if name == "search_wines":
+                        result = await self.execute_search_wines(arguments)
+                    elif name == "semantic_search":
+                        result = await self.execute_semantic_search(arguments)
+                    else:
+                        result = json.dumps({"error": f"Unknown tool: {name}"})
+
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": result,
+                    })
+
+                iteration += 1
+
+            # Max iterations reached — final call without tools
+            response = await self.llm_service.generate_with_tools(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                tools=None,
+                messages=messages,
+            )
+            return response.content
+
+        except Exception as e:
+            logger.warning("Agent loop error: %s", e)
+            return None
+
+
+# =============================================================================
+# TOOL RESPONSE FORMATTING
+# =============================================================================
+
+
+def format_tool_response(wines: list, filters_applied: dict) -> str:
+    """Format wine search results as JSON string for tool response."""
+    wine_list = []
+    for wine in wines:
+        wine_data = {
+            "name": wine.name,
+            "producer": wine.producer,
+            "region": wine.region,
+            "country": wine.country,
+            "vintage_year": wine.vintage_year,
+            "grape_varieties": wine.grape_varieties,
+            "wine_type": wine.wine_type.value,
+            "sweetness": wine.sweetness.value,
+            "body": wine.body,
+            "tannins": wine.tannins,
+            "acidity": wine.acidity,
+            "price_rub": float(wine.price_rub),
+            "description": wine.description,
+            "tasting_notes": wine.tasting_notes,
+            "food_pairings": wine.food_pairings,
         }
+        wine_list.append(wine_data)
 
-    async def get_llm_prompt_for_food_pairing(
-        self,
-        user_message: str,
-        food_item: str,
-        user_profile: Optional[dict] = None,
-    ) -> dict:
-        """
-        Get LLM prompt for food pairing recommendation.
+    return json.dumps(
+        {
+            "found": len(wine_list),
+            "wines": wine_list,
+            "filters_applied": filters_applied,
+        },
+        ensure_ascii=False,
+    )
 
-        Args:
-            user_message: Original user message
-            food_item: Detected food/dish
-            user_profile: User's taste profile
 
-        Returns system prompt and user prompt.
-        """
-        wines = await self.wine_repo.get_list(limit=20)
-        catalog_text = format_wine_catalog_for_prompt(wines)
-        profile_text = format_user_profile_for_prompt(user_profile)
-        pairing_hint = get_pairing_hint(food_item)
+def format_semantic_response(
+    results: list[tuple], filters_applied: dict
+) -> str:
+    """Format semantic search results as JSON string for tool response.
 
-        user_prompt = PROMPT_FOOD_PAIRING.format(
-            user_message=user_message,
-            food_item=food_item,
-            pairing_hints=pairing_hint,
-            user_profile=profile_text,
-            wine_catalog=catalog_text,
-        )
-
-        system = SYSTEM_PROMPT_PERSONALIZED if user_profile else SYSTEM_PROMPT_COLD_START
-
-        return {
-            "system_prompt": system,
-            "user_prompt": user_prompt,
-            "wines_in_prompt": len(wines),
+    Args:
+        results: List of (Wine, similarity_score) tuples from WineRepository.semantic_search()
+        filters_applied: Dict of filters used in the search
+    """
+    wine_list = []
+    for wine, similarity_score in results:
+        wine_data = {
+            "name": wine.name,
+            "producer": wine.producer,
+            "region": wine.region,
+            "country": wine.country,
+            "vintage_year": wine.vintage_year,
+            "grape_varieties": wine.grape_varieties,
+            "wine_type": wine.wine_type.value,
+            "sweetness": wine.sweetness.value,
+            "body": wine.body,
+            "tannins": wine.tannins,
+            "acidity": wine.acidity,
+            "price_rub": float(wine.price_rub),
+            "description": wine.description,
+            "tasting_notes": wine.tasting_notes,
+            "food_pairings": wine.food_pairings,
+            "similarity_score": similarity_score,
         }
+        wine_list.append(wine_data)
+
+    return json.dumps(
+        {
+            "found": len(wine_list),
+            "wines": wine_list,
+            "filters_applied": filters_applied,
+        },
+        ensure_ascii=False,
+    )
 
 
 # =============================================================================

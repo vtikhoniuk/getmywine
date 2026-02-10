@@ -53,6 +53,10 @@ class Settings(BaseSettings):
     # Conversation history
     llm_max_history_messages: int = 10  # How many previous messages to include
 
+    # Agent loop (agentic RAG)
+    agent_max_iterations: int = 2  # Max tool call iterations per request
+    embedding_model: str = "text-embedding-3-small"  # Model for query embeddings
+
     # Events API (optional, for real-time events)
     calendarific_api_key: str = ""  # For holiday data
     events_country: str = "RU"
