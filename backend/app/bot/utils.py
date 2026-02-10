@@ -1,6 +1,10 @@
 """Utility functions for Telegram bot."""
 
 import re
+from pathlib import Path
+from typing import Optional
+
+from app.models.wine import Wine
 
 
 def sanitize_telegram_markdown(text: str) -> str:
@@ -47,6 +51,28 @@ async def resolve_image_url(url: str) -> str:
     except Exception:
         pass
     return url
+
+
+_STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+
+
+def get_wine_image_path(wine: Wine) -> Optional[Path]:
+    """Resolve wine's image_url to a local file path.
+
+    Args:
+        wine: Wine model instance
+
+    Returns:
+        Path to the image file, or None if not available
+    """
+    if not wine.image_url:
+        return None
+    # image_url example: /static/images/wines/39a5ce9f58.png
+    rel = wine.image_url.lstrip("/")
+    if rel.startswith("static/"):
+        rel = rel[len("static/"):]
+    path = _STATIC_DIR / rel
+    return path if path.exists() else None
 
 
 def detect_language(message_text: str, telegram_locale: str | None = None) -> str:

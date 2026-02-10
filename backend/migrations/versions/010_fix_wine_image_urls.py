@@ -19,22 +19,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Load current seed data with corrected URLs
-    seed_path = Path(__file__).resolve().parents[2] / "app" / "data" / "wines_seed.json"
-    with open(seed_path) as f:
-        data = json.load(f)
-
-    for wine in data["wines"]:
-        image_url = wine.get("image_url")
-        if not image_url:
-            continue
-        name = wine["name"].replace("'", "''")
-        image_url_escaped = image_url.replace("'", "''")
-        op.execute(
-            f"UPDATE wines SET image_url = '{image_url_escaped}' WHERE name = '{name}'"
-        )
+    # No-op: migration 012 replaces all wine data including image URLs
+    pass
 
 
 def downgrade() -> None:
-    # No reliable way to restore old URLs; this is data-only
     pass

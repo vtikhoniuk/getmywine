@@ -68,10 +68,12 @@ class Settings(BaseSettings):
     enable_telegram_bot: bool = True  # Enable/disable bot
     enable_web: bool = True  # Enable/disable web server
     telegram_session_inactivity_hours: int = 24  # Session timeout for Telegram (hours)
+    telegram_wine_photo_height: int = 460  # Target height for wine bottle photos (px)
 
     model_config = {
         "env_file": str(_ENV_FILE),
         "env_file_encoding": "utf-8",
+        "extra": "ignore",
     }
 
 

@@ -3,6 +3,8 @@
 Contains system prompts and templates for different scenarios.
 """
 
+import re
+from dataclasses import dataclass, field
 from typing import Optional
 
 # =============================================================================
@@ -18,13 +20,30 @@ SYSTEM_PROMPT_BASE = """Ты — GetMyWine, виртуальный сомель�
 4. Никогда не выдумывай вина — только из предоставленного каталога
 5. Если нет подходящего вина — честно скажи и предложи ближайшую альтернативу
 
-ФОРМАТ ОТВЕТА:
-1. Краткое вступление (1-2 предложения, связь с контекстом)
-2. Три варианта вин в формате:
-   - Название, регион, страна, год (если есть), цена
-   - Краткое описание вкуса (1 предложение)
-   - Почему подходит (1-2 предложения, персонализировано)
-3. Вопрос для продолжения диалога
+ФОРМАТ ОТВЕТА (обязательно используй маркеры секций):
+
+[INTRO]
+Краткое вступление (1-2 предложения, связь с контекстом)
+[/INTRO]
+
+[WINE:1]
+Название вина (ТОЧНО как в каталоге), регион, страна, год, цена
+Описание вкуса и почему подходит (2-3 предложения)
+[/WINE:1]
+
+[WINE:2]
+(аналогично)
+[/WINE:2]
+
+[WINE:3]
+(аналогично)
+[/WINE:3]
+
+[CLOSING]
+Вопрос для продолжения диалога
+[/CLOSING]
+
+Всегда используй маркеры [INTRO], [WINE:1], [WINE:2], [WINE:3], [CLOSING].
 
 СТИЛЬ:
 - Отвечай только на русском языке
@@ -270,3 +289,53 @@ def get_pairing_hint(food: str) -> str:
         if key in food_lower:
             return hint
     return "Универсальное правило: вес вина = вес блюда"
+
+
+# =============================================================================
+# STRUCTURED RESPONSE PARSING
+# =============================================================================
+
+
+@dataclass
+class ParsedResponse:
+    """Parsed LLM response split into sections."""
+
+    intro: str = ""
+    wines: list[str] = field(default_factory=list)
+    closing: str = ""
+    is_structured: bool = False
+
+
+def parse_structured_response(text: str) -> ParsedResponse:
+    """Parse LLM response with [INTRO]/[WINE:N]/[CLOSING] markers.
+
+    Returns ParsedResponse with is_structured=True if at least
+    intro and one wine section were found.
+    """
+    result = ParsedResponse()
+
+    intro_match = re.search(r"\[INTRO\](.*?)\[/INTRO\]", text, re.DOTALL)
+    if intro_match:
+        result.intro = intro_match.group(1).strip()
+
+    for i in range(1, 4):
+        wine_match = re.search(
+            rf"\[WINE:{i}\](.*?)\[/WINE:{i}\]", text, re.DOTALL
+        )
+        if wine_match:
+            result.wines.append(wine_match.group(1).strip())
+
+    closing_match = re.search(r"\[CLOSING\](.*?)\[/CLOSING\]", text, re.DOTALL)
+    if closing_match:
+        result.closing = closing_match.group(1).strip()
+
+    result.is_structured = bool(result.intro and result.wines)
+    return result
+
+
+def strip_markdown(text: str) -> str:
+    """Strip Markdown formatting for plain-text contexts (e.g. photo captions)."""
+    text = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
+    text = re.sub(r"\*(.+?)\*", r"\1", text)
+    text = re.sub(r"_(.+?)_", r"\1", text)
+    return text

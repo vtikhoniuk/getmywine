@@ -17,9 +17,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.execute("UPDATE wines SET image_url = NULL WHERE image_url LIKE '%unsplash.com%'")
+    # No-op: migration 012 replaces all wine data including image URLs
+    pass
 
 
 def downgrade() -> None:
-    # Stock photo URLs are not worth restoring
     pass

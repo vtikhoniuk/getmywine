@@ -5,7 +5,7 @@ import logging
 from telegram import Update
 from telegram.ext import CommandHandler, ContextTypes
 
-from app.bot.utils import sanitize_telegram_markdown
+from app.bot.sender import send_fallback_response, send_wine_recommendations
 from app.core.database import async_session_maker
 from app.services.sommelier import SommelierService
 from app.services.telegram_bot import TelegramBotService
@@ -20,7 +20,8 @@ async def start_command(
     """Handle /start command.
 
     Creates TelegramUser, marks age verified, creates session,
-    and sends LLM-generated welcome message with wine suggestions.
+    and sends LLM-generated welcome as 5 messages:
+    intro, 3 wines with photos, closing question.
     """
     if not update.effective_user or not update.message:
         return
@@ -51,22 +52,29 @@ async def start_command(
                 language_code=language_code,
             )
 
-            # Generate welcome via LLM (same format as regular messages)
+            # Generate welcome via LLM
             sommelier = SommelierService(db)
             result = await sommelier.generate_welcome_with_suggestions(
                 user_name=first_name,
             )
-            welcome_text = sanitize_telegram_markdown(result["message"])
 
-            await update.message.reply_text(
-                welcome_text,
-                parse_mode="Markdown",
+            wines = result.get("wines", [])
+            welcome_text = result["message"]
+
+            # Try structured 5-message format
+            sent = await send_wine_recommendations(
+                update, welcome_text, wines, language_code
             )
 
+            if not sent:
+                # Fallback: single text + separate photos
+                await send_fallback_response(update, welcome_text, wines, language_code)
+
             logger.info(
-                "Sent welcome message to user %s with %d wines",
+                "Sent welcome to user %s (%d wines, structured=%s)",
                 telegram_id,
-                len(result["wines"]),
+                len(wines),
+                sent,
             )
 
     except Exception as e:
