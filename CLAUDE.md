@@ -178,6 +178,8 @@
 - PostgreSQL 16 + pgvector (существующая БД, 50 вин с эмбеддингами 1536 dims) (015-agentic-rag)
 - Python 3.12+ + pytest 8.x, pytest-asyncio, SQLAlchemy 2.0, asyncpg, openai (OpenRouter-compatible), pgvector (016-llm-eval-tests)
 - PostgreSQL 16 + pgvector (существующая dev-БД с 50 винами и embeddings) (016-llm-eval-tests)
+- Python 3.12+ + langfuse (Python SDK), openai (уже установлен — Langfuse обёртка совместима), Docker Compose (017-langfuse-monitoring)
+- PostgreSQL 17 (отдельный для Langfuse), ClickHouse (аналитика трейсов), MinIO (blob storage), Redis 7 (очередь) (017-langfuse-monitoring)
 
 ## Recent Changes
 - 002-chat-welcome: Added Python 3.12+ + FastAPI, SQLAlchemy 2.0, Jinja2, HTMX

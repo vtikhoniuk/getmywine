@@ -65,6 +65,12 @@ class Settings(BaseSettings):
     session_inactivity_minutes: int = 30  # Auto-close session after inactivity
     session_retention_days: int = 90  # Keep sessions for this many days
 
+    # Langfuse (LLM observability)
+    langfuse_secret_key: str = ""
+    langfuse_public_key: str = ""
+    langfuse_host: str = "http://langfuse-web:3000"
+    langfuse_tracing_enabled: bool = True
+
     # Telegram Bot
     telegram_bot_token: str = ""  # Bot token from @BotFather
     telegram_mode: str = "polling"  # "polling" or "webhook"

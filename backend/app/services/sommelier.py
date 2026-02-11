@@ -10,6 +10,15 @@ from datetime import datetime
 from typing import Optional
 import uuid
 
+try:
+    from langfuse.decorators import observe, langfuse_context
+except ImportError:
+    def observe(**kwargs):
+        def decorator(func):
+            return func
+        return decorator
+    langfuse_context = None
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.wine import Wine
@@ -603,6 +612,7 @@ class SommelierService:
             lines.append(line)
         return "\n".join(lines)
 
+    @observe(name="execute_search_wines")
     async def execute_search_wines(self, arguments: dict) -> str:
         """Execute search_wines tool: map arguments to WineRepository.get_list().
 
@@ -687,6 +697,7 @@ class SommelierService:
 
         return format_tool_response(wines, filters_applied)
 
+    @observe(name="execute_semantic_search")
     async def execute_semantic_search(self, arguments: dict) -> str:
         """Execute semantic_search tool: embed query and search via pgvector.
 
@@ -724,6 +735,7 @@ class SommelierService:
 
         return format_semantic_response(results, filters_applied)
 
+    @observe(name="generate_agentic_response")
     async def generate_agentic_response(
         self,
         system_prompt: str,
@@ -755,6 +767,8 @@ class SommelierService:
             messages.extend(conversation_history)
         messages.append({"role": "user", "content": user_prompt})
 
+        tools_used: list[str] = []
+
         try:
             iteration = 0
             while iteration < max_iterations:
@@ -767,6 +781,7 @@ class SommelierService:
 
                 # No tool calls — return content directly
                 if not response.tool_calls:
+                    self._update_langfuse_metadata(tools_used, iteration)
                     return response.content
 
                 # Append assistant message with tool_calls as a dict
@@ -788,6 +803,7 @@ class SommelierService:
                 for tool_call in response.tool_calls:
                     name = tool_call.function.name
                     arguments = json.loads(tool_call.function.arguments)
+                    tools_used.append(name)
 
                     if name == "search_wines":
                         result = await self.execute_search_wines(arguments)
@@ -811,11 +827,27 @@ class SommelierService:
                 tools=None,
                 messages=messages,
             )
+            self._update_langfuse_metadata(tools_used, iteration)
             return response.content
 
         except Exception as e:
             logger.exception("Agent loop error (tool use may not be supported): %s", e)
             return None
+
+    @staticmethod
+    def _update_langfuse_metadata(tools_used: list[str], iterations: int) -> None:
+        """Update current Langfuse observation with agent loop metadata."""
+        if langfuse_context is None:
+            return
+        try:
+            langfuse_context.update_current_observation(
+                metadata={
+                    "tools_used": tools_used,
+                    "iterations": iterations,
+                },
+            )
+        except Exception:
+            pass  # Non-critical: don't break agent loop if Langfuse fails
 
 
 # =============================================================================

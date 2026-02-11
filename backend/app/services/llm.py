@@ -77,11 +77,18 @@ class OpenRouterService(BaseLLMService):
 
     @property
     def client(self):
-        """Lazy initialization of OpenAI client with OpenRouter base URL."""
+        """Lazy initialization of OpenAI client with OpenRouter base URL.
+
+        Uses Langfuse OpenAI wrapper for automatic LLM tracing when enabled.
+        Falls back to standard OpenAI client when tracing is disabled.
+        """
         if self._client is None:
             try:
-                import openai
-                self._client = openai.AsyncOpenAI(
+                if get_settings().langfuse_tracing_enabled:
+                    from langfuse.openai import AsyncOpenAI
+                else:
+                    from openai import AsyncOpenAI
+                self._client = AsyncOpenAI(
                     api_key=self.api_key,
                     base_url=self.base_url,
                 )
