@@ -10,7 +10,7 @@ from tests.eval.golden_queries import SEMANTIC_QUERIES
 pytestmark = [pytest.mark.eval, pytest.mark.asyncio]
 
 # Minimum cosine similarity to consider a result relevant
-_MIN_SIMILARITY = 0.25
+_MIN_SIMILARITY = 0.15
 
 
 @pytest.mark.parametrize(

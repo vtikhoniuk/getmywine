@@ -176,6 +176,8 @@
 - PostgreSQL 16 + pgvector (без изменений схемы) (014-prompt-guard)
 - Python 3.12+ + FastAPI, SQLAlchemy 2.0, python-telegram-bot 21.x, OpenAI SDK (для OpenRouter API), pgvector (015-agentic-rag)
 - PostgreSQL 16 + pgvector (существующая БД, 50 вин с эмбеддингами 1536 dims) (015-agentic-rag)
+- Python 3.12+ + pytest 8.x, pytest-asyncio, SQLAlchemy 2.0, asyncpg, openai (OpenRouter-compatible), pgvector (016-llm-eval-tests)
+- PostgreSQL 16 + pgvector (существующая dev-БД с 50 винами и embeddings) (016-llm-eval-tests)
 
 ## Recent Changes
 - 002-chat-welcome: Added Python 3.12+ + FastAPI, SQLAlchemy 2.0, Jinja2, HTMX
