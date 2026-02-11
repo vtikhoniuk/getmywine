@@ -805,8 +805,9 @@ class SommelierService:
 
                 # No tool calls — parse JSON response
                 if not response.tool_calls:
-                    self._update_langfuse_metadata(tools_used, iteration)
                     content = response.content or ""
+                    response_type = self._extract_response_type(content)
+                    self._update_langfuse_metadata(tools_used, iteration, response_type)
                     logger.debug(
                         "Agent loop done: iterations=%d, tools_used=%s, content_start=%r",
                         iteration, tools_used, content[:150],
@@ -857,13 +858,26 @@ class SommelierService:
                 messages=messages,
                 response_format=SOMMELIER_RESPONSE_SCHEMA,
             )
-            self._update_langfuse_metadata(tools_used, iteration)
             content = response.content or ""
+            response_type = self._extract_response_type(content)
+            self._update_langfuse_metadata(tools_used, iteration, response_type)
             return self._parse_final_response(content)
 
         except Exception as e:
             logger.exception("Agent loop error (tool use may not be supported): %s", e)
             return None
+
+    @staticmethod
+    def _extract_response_type(content: str) -> str | None:
+        """Extract response_type from JSON content for Langfuse metadata."""
+        json_str = SommelierService._extract_json_str(content)
+        if json_str:
+            try:
+                data = json.loads(json_str)
+                return data.get("response_type")
+            except (json.JSONDecodeError, AttributeError):
+                pass
+        return None
 
     @staticmethod
     def _extract_json_str(content: str) -> Optional[str]:
@@ -930,17 +944,22 @@ class SommelierService:
         return (content, [])
 
     @staticmethod
-    def _update_langfuse_metadata(tools_used: list[str], iterations: int) -> None:
+    def _update_langfuse_metadata(
+        tools_used: list[str],
+        iterations: int,
+        response_type: str | None = None,
+    ) -> None:
         """Update current Langfuse observation with agent loop metadata."""
         if langfuse_context is None:
             return
         try:
-            langfuse_context.update_current_observation(
-                metadata={
-                    "tools_used": tools_used,
-                    "iterations": iterations,
-                },
-            )
+            metadata: dict = {
+                "tools_used": tools_used,
+                "iterations": iterations,
+            }
+            if response_type:
+                metadata["response_type"] = response_type
+            langfuse_context.update_current_observation(metadata=metadata)
         except Exception:
             pass  # Non-critical: don't break agent loop if Langfuse fails
 

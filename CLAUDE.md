@@ -181,6 +181,7 @@
 - Python 3.12+ + langfuse (Python SDK), openai (уже установлен — Langfuse обёртка совместима), Docker Compose (017-langfuse-monitoring)
 - PostgreSQL 17 (отдельный для Langfuse), ClickHouse (аналитика трейсов), MinIO (blob storage), Redis 7 (очередь) (017-langfuse-monitoring)
 - Python 3.12+ + FastAPI, SQLAlchemy 2.0, python-telegram-bot 21.x, OpenAI SDK (для OpenRouter), Langfuse SDK, Pydantic v2 (018-structured-output)
+- Python 3.12+ + FastAPI, SQLAlchemy 2.0, python-telegram-bot 21.x, OpenAI SDK (OpenRouter), Langfuse SDK, Pydantic v2 (019-expand-wine-responses)
 
 ## Recent Changes
 - 002-chat-welcome: Added Python 3.12+ + FastAPI, SQLAlchemy 2.0, Jinja2, HTMX
