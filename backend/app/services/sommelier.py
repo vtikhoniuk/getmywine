@@ -6,6 +6,7 @@ for intelligent wine recommendations.
 
 import json
 import logging
+import re
 from datetime import datetime
 from typing import Optional
 import uuid
@@ -467,7 +468,8 @@ class SommelierService:
                 events_context=events_context,
             )
             if fallback is not None:
-                return (fallback, [])
+                # Fallback may return JSON (system prompt says "always JSON")
+                return self._parse_final_response(fallback)
 
             logger.warning("LLM fallback also failed, using mock")
 
@@ -796,10 +798,10 @@ class SommelierService:
                 finish_reason = getattr(response, "finish_reason", None)
                 if finish_reason == "refusal":
                     logger.warning("LLM refused structured output, returning as-is")
-                    return (response.content or "", [])
+                    return self._parse_final_response(response.content or "")
                 if finish_reason == "length":
                     logger.warning("LLM response truncated (finish_reason=length)")
-                    return (response.content or "", [])
+                    return self._parse_final_response(response.content or "")
 
                 # No tool calls — parse JSON response
                 if not response.tool_calls:
@@ -864,14 +866,36 @@ class SommelierService:
             return None
 
     @staticmethod
+    def _extract_json_str(content: str) -> Optional[str]:
+        """Extract JSON object string from content that may contain surrounding text."""
+        # Fast path: content is already pure JSON
+        stripped = content.strip()
+        if stripped.startswith("{") and stripped.endswith("}"):
+            return stripped
+
+        # Strip markdown code fences: ```json ... ``` or ``` ... ```
+        fence_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", stripped, re.DOTALL)
+        if fence_match:
+            return fence_match.group(1).strip()
+
+        # Find first { and last } — extract the JSON object
+        start = stripped.find("{")
+        end = stripped.rfind("}")
+        if start != -1 and end > start:
+            return stripped[start:end + 1]
+
+        return None
+
+    @staticmethod
     def _parse_final_response(content: str) -> tuple[str, list[str]]:
         """Parse final LLM response: try JSON structured output, fallback to raw text."""
         from app.services.sommelier_prompts import SommelierResponse, render_response_text
 
-        stripped = content.strip()
-        if stripped.startswith("{"):
+        json_str = SommelierService._extract_json_str(content)
+        if json_str:
+            # Try Pydantic validation first
             try:
-                parsed = SommelierResponse.model_validate_json(stripped)
+                parsed = SommelierResponse.model_validate_json(json_str)
                 rendered = render_response_text(parsed)
                 wine_names = [w.wine_name for w in parsed.wines]
                 logger.info(
@@ -880,7 +904,28 @@ class SommelierService:
                 )
                 return (rendered, wine_names)
             except Exception as e:
-                logger.warning("JSON parse failed in agent response: %s", e)
+                logger.warning("Pydantic parse failed: %s — trying json.loads fallback", e)
+
+            # Fallback: manual json.loads for malformed but parseable JSON
+            try:
+                data = json.loads(json_str)
+                intro = data.get("intro", "")
+                closing = data.get("closing", "")
+                wines_data = data.get("wines", [])
+                wine_names = [w.get("wine_name", "") for w in wines_data if isinstance(w, dict)]
+                parts = [intro]
+                for w in wines_data:
+                    if isinstance(w, dict) and w.get("description"):
+                        parts.append(w["description"])
+                parts.append(closing)
+                rendered = "\n\n".join(p for p in parts if p)
+                logger.info(
+                    "Fallback json.loads succeeded: wines=%d, rendered_len=%d",
+                    len(wine_names), len(rendered),
+                )
+                return (rendered, wine_names)
+            except Exception as e2:
+                logger.warning("json.loads fallback also failed: %s", e2)
 
         return (content, [])
 

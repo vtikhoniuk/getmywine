@@ -261,7 +261,7 @@ class WineRecommendation(BaseModel):
             raise ValueError("description must not be empty")
         return v
 
-    model_config = {"extra": "forbid"}
+    model_config = {"extra": "ignore"}
 
 
 class SommelierResponse(BaseModel):
@@ -289,7 +289,7 @@ class SommelierResponse(BaseModel):
             raise ValueError(f"guard_type must be one of {allowed}, got '{v}'")
         return v
 
-    model_config = {"extra": "forbid"}
+    model_config = {"extra": "ignore"}
 
 
 SOMMELIER_RESPONSE_SCHEMA = {

@@ -5,6 +5,7 @@ to eliminate duplication (DRY).
 """
 
 import io
+import json
 import logging
 import re
 from pathlib import Path
@@ -129,6 +130,55 @@ async def send_wine_recommendations(
     return True
 
 
+def _extract_and_render_json(text: str) -> str | None:
+    """Try to extract JSON from text and render it as human-readable message.
+
+    Returns rendered text or None if no valid JSON found.
+    """
+    stripped = text.strip()
+
+    # Try direct parse
+    json_str = None
+    if stripped.startswith("{") and stripped.endswith("}"):
+        json_str = stripped
+    else:
+        # Try markdown code fences
+        fence_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", stripped, re.DOTALL)
+        if fence_match:
+            json_str = fence_match.group(1).strip()
+        else:
+            # Find first { to last }
+            start = stripped.find("{")
+            end = stripped.rfind("}")
+            if start != -1 and end > start:
+                json_str = stripped[start:end + 1]
+
+    if not json_str:
+        return None
+
+    # Try parse_structured_response (Pydantic-backed)
+    parsed = parse_structured_response(json_str)
+    if parsed.is_structured:
+        parts = [p for p in [parsed.intro] + parsed.wines + [parsed.closing] if p]
+        return "\n\n".join(parts)
+
+    # Last resort: raw json.loads
+    try:
+        data = json.loads(json_str)
+        if isinstance(data, dict) and "intro" in data:
+            parts = [data.get("intro", "")]
+            for w in data.get("wines", []):
+                if isinstance(w, dict) and w.get("description"):
+                    parts.append(w["description"])
+            if data.get("closing"):
+                parts.append(data["closing"])
+            return "\n\n".join(p for p in parts if p)
+    except (json.JSONDecodeError, TypeError):
+        pass
+
+    return None
+
+
 async def send_fallback_response(
     update: Update,
     response_text: str,
@@ -139,6 +189,11 @@ async def send_fallback_response(
 
     Used when structured parsing fails (is_structured=False).
     """
+    # Safety: never display raw JSON to user — render it first
+    rendered = _extract_and_render_json(response_text)
+    if rendered:
+        response_text = rendered
+
     # Strip any leftover section markers so tags aren't visible to user
     clean_text = _SECTION_MARKERS_RE.sub("", response_text).strip()
     await update.message.reply_text(
