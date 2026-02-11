@@ -57,11 +57,11 @@ class TestParseStructuredResponse:
         assert parsed.wines == []
 
     def test_intro_without_wines(self):
-        """Intro present but no wines → is_structured=False."""
+        """Intro present but no wines → is_structured=True (informational response)."""
         text = "[INTRO]\nВведение\n[/INTRO]"
         parsed = parse_structured_response(text)
 
-        assert parsed.is_structured is False
+        assert parsed.is_structured is True
         assert parsed.intro == "Введение"
         assert parsed.wines == []
 

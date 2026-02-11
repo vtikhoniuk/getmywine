@@ -36,6 +36,7 @@ class BaseLLMService(ABC):
         history: Optional[list[ChatMessage]] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        response_format: Optional[dict] = None,
     ) -> str:
         """Generate a response from the LLM."""
         pass
@@ -48,6 +49,7 @@ class BaseLLMService(ABC):
         messages: Optional[list[dict]] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        response_format: Optional[dict] = None,
     ):
         """Generate a response with tool use support. Returns full message object."""
         raise NotImplementedError(
@@ -106,6 +108,7 @@ class OpenRouterService(BaseLLMService):
         history: Optional[list[ChatMessage]] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        response_format: Optional[dict] = None,
     ) -> str:
         """Generate response using OpenRouter."""
         settings = get_settings()
@@ -123,18 +126,21 @@ class OpenRouterService(BaseLLMService):
         # Add current user message
         messages.append({"role": "user", "content": user_prompt})
 
+        kwargs = dict(
+            model=self.model,
+            temperature=temp,
+            max_tokens=tokens,
+            messages=messages,
+            extra_headers={
+                "HTTP-Referer": "https://getmywine.local",
+                "X-Title": "GetMyWine",
+            },
+        )
+        if response_format is not None:
+            kwargs["response_format"] = response_format
+
         try:
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                temperature=temp,
-                max_tokens=tokens,
-                messages=messages,
-                # OpenRouter-specific headers
-                extra_headers={
-                    "HTTP-Referer": "https://getmywine.local",
-                    "X-Title": "GetMyWine",
-                },
-            )
+            response = await self.client.chat.completions.create(**kwargs)
             return response.choices[0].message.content
 
         except Exception as e:
@@ -149,6 +155,7 @@ class OpenRouterService(BaseLLMService):
         messages: Optional[list[dict]] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        response_format: Optional[dict] = None,
     ):
         """Generate response with tool use via OpenRouter."""
         settings = get_settings()
@@ -163,18 +170,22 @@ class OpenRouterService(BaseLLMService):
                 {"role": "user", "content": user_prompt},
             ]
 
+        kwargs = dict(
+            model=self.model,
+            temperature=temp,
+            max_tokens=tokens,
+            messages=api_messages,
+            tools=tools,
+            extra_headers={
+                "HTTP-Referer": "https://getmywine.local",
+                "X-Title": "GetMyWine",
+            },
+        )
+        if response_format is not None:
+            kwargs["response_format"] = response_format
+
         try:
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                temperature=temp,
-                max_tokens=tokens,
-                messages=api_messages,
-                tools=tools,
-                extra_headers={
-                    "HTTP-Referer": "https://getmywine.local",
-                    "X-Title": "GetMyWine",
-                },
-            )
+            response = await self.client.chat.completions.create(**kwargs)
             return response.choices[0].message
 
         except Exception as e:
@@ -408,6 +419,7 @@ class LLMService:
         history: Optional[list[ChatMessage]] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        response_format: Optional[dict] = None,
     ) -> str:
         """
         Generate LLM response with optional conversation history.
@@ -418,6 +430,7 @@ class LLMService:
             history: Previous conversation messages (user + assistant)
             temperature: Override default temperature
             max_tokens: Override default max tokens
+            response_format: JSON schema for structured output
 
         Returns:
             Model response text
@@ -442,6 +455,7 @@ class LLMService:
             history=trimmed_history,
             temperature=temperature,
             max_tokens=max_tokens,
+            response_format=response_format,
         )
 
     async def generate_with_tools(
@@ -452,6 +466,7 @@ class LLMService:
         messages: Optional[list[dict]] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        response_format: Optional[dict] = None,
     ):
         """Generate LLM response with tool use support."""
         self._initialize()
@@ -466,6 +481,7 @@ class LLMService:
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
+            response_format=response_format,
         )
 
     async def get_query_embedding(self, query: str) -> list[float]:
@@ -482,6 +498,7 @@ class LLMService:
         system_prompt: str,
         user_prompt: str,
         history: Optional[list[ChatMessage]] = None,
+        response_format: Optional[dict] = None,
     ) -> str:
         """
         Generate wine recommendation with optimized settings.
@@ -494,6 +511,7 @@ class LLMService:
             history=history,
             temperature=0.6,  # More focused for recommendations
             max_tokens=2000,
+            response_format=response_format,
         )
 
 

@@ -180,6 +180,7 @@
 - PostgreSQL 16 + pgvector (существующая dev-БД с 50 винами и embeddings) (016-llm-eval-tests)
 - Python 3.12+ + langfuse (Python SDK), openai (уже установлен — Langfuse обёртка совместима), Docker Compose (017-langfuse-monitoring)
 - PostgreSQL 17 (отдельный для Langfuse), ClickHouse (аналитика трейсов), MinIO (blob storage), Redis 7 (очередь) (017-langfuse-monitoring)
+- Python 3.12+ + FastAPI, SQLAlchemy 2.0, python-telegram-bot 21.x, OpenAI SDK (для OpenRouter), Langfuse SDK, Pydantic v2 (018-structured-output)
 
 ## Recent Changes
 - 002-chat-welcome: Added Python 3.12+ + FastAPI, SQLAlchemy 2.0, Jinja2, HTMX

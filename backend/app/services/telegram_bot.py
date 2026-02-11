@@ -261,7 +261,7 @@ class TelegramBotService:
             # history includes the just-saved user message;
             # >1 means there were prior exchanges in this session
             is_continuation = len(history) > 1
-            response_text = await self.sommelier.generate_response(
+            response_text, wine_names = await self.sommelier.generate_response(
                 user_message=enhanced_message,
                 user_profile=None,  # TODO: Add user profile support
                 conversation_history=history,
@@ -269,7 +269,9 @@ class TelegramBotService:
             )
 
             # Extract recommended wines mentioned in the LLM response
-            wines = await self._extract_wines_from_response(response_text)
+            wines = await self._extract_wines_from_response(
+                response_text, wine_names=wine_names,
+            )
 
         except Exception as e:
             logger.exception("Error getting recommendation: %s", e)
@@ -294,21 +296,37 @@ class TelegramBotService:
         self,
         response_text: str,
         max_wines: int = 3,
+        wine_names: Optional[list[str]] = None,
     ) -> list[Wine]:
         """Extract wines mentioned in the LLM response by matching names.
 
-        Uses direct name matching: after normalization, wine.name contains
-        exactly the name the LLM is instructed to use ("ТОЧНО как в каталоге").
+        When wine_names is provided (from structured output), uses direct
+        name lookup for 100% reliable matching. Falls back to text search
+        when wine_names is empty (legacy/heuristic responses).
 
         Args:
             response_text: LLM-generated response text
             max_wines: Maximum number of wines to return
+            wine_names: Wine names from structured JSON output (if available)
 
         Returns:
-            List of matched Wine objects, ordered by position in text
+            List of matched Wine objects, in order
         """
         all_wines = await self.wine_repo.get_list(limit=100)
 
+        # Fast path: structured output provides exact wine names
+        if wine_names:
+            wine_by_name = {w.name: w for w in all_wines}
+            result = []
+            for name in wine_names[:max_wines]:
+                wine = wine_by_name.get(name)
+                if wine:
+                    result.append(wine)
+                else:
+                    logger.warning("Wine name from structured output not found in catalog: %r", name)
+            return result
+
+        # Fallback: text-based matching (legacy responses)
         found: list[tuple[int, Wine]] = []
         found_ids: set = set()
 

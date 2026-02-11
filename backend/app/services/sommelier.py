@@ -276,7 +276,8 @@ class SommelierService:
         day_context: dict,
         cross_session_context: Optional[CrossSessionContext] = None,
     ) -> str:
-        """Generate welcome message using LLM."""
+        """Generate welcome message using LLM with structured JSON output."""
+        from app.services.sommelier_prompts import SOMMELIER_RESPONSE_SCHEMA
         # Build events context for prompt
         events_text = self._format_events_for_prompt(day_context)
 
@@ -312,9 +313,12 @@ class SommelierService:
             response = await self.llm_service.generate_wine_recommendation(
                 system_prompt=SYSTEM_PROMPT_COLD_START if not user_profile else SYSTEM_PROMPT_PERSONALIZED,
                 user_prompt=user_prompt,
+                response_format=SOMMELIER_RESPONSE_SCHEMA,
             )
-            logger.info("Generated LLM welcome message")
-            return response
+            # Parse JSON → rendered text so raw JSON never leaks to Telegram
+            rendered, _ = self._parse_final_response(response)
+            logger.info("Generated LLM welcome message (structured JSON)")
+            return rendered
 
         except LLMError as e:
             logger.warning("LLM generation failed, using fallback: %s", e)
@@ -397,7 +401,7 @@ class SommelierService:
         conversation_history: Optional[list[dict]] = None,
         cross_session_context: Optional[CrossSessionContext] = None,
         is_continuation: bool = False,
-    ) -> str:
+    ) -> tuple[str, list[str]]:
         """
         Generate AI response to user message using agentic RAG with tool use.
 
@@ -413,7 +417,8 @@ class SommelierService:
             is_continuation: Whether this continues an existing conversation
 
         Returns:
-            AI response string
+            Tuple of (rendered_text, wine_names) where wine_names is a list
+            of wine names from the structured response (empty if fallback).
         """
         from app.services.sommelier_prompts import SYSTEM_PROMPT_AGENTIC
 
@@ -462,18 +467,19 @@ class SommelierService:
                 events_context=events_context,
             )
             if fallback is not None:
-                return fallback
+                return (fallback, [])
 
             logger.warning("LLM fallback also failed, using mock")
 
         # Final fallback to mock (no LLM available at all)
         from app.services.ai_mock import MockAIService
         mock = MockAIService()
-        return await mock.generate_response_with_context(
+        mock_response = await mock.generate_response_with_context(
             user_message=user_message,
             detected_event=detect_event(user_message),
             detected_food=detect_food(user_message),
         )
+        return (mock_response, [])
 
     async def _find_wine_for_suggestion(
         self,
@@ -743,13 +749,19 @@ class SommelierService:
         conversation_history: Optional[list[dict]] = None,
         user_profile: Optional[dict] = None,
         events_context: Optional[str] = None,
-    ) -> Optional[str]:
+    ) -> Optional[tuple[str, list[str]]]:
         """Agent loop: LLM -> tool_calls -> execute -> repeat (max iterations).
 
-        Returns the final text content from LLM, or None on error (caller handles fallback).
+        Returns tuple of (rendered_text, wine_names) or None on error.
         """
         from app.config import get_settings
-        from app.services.sommelier_prompts import WINE_TOOLS, build_unified_user_prompt
+        from app.services.sommelier_prompts import (
+            SOMMELIER_RESPONSE_SCHEMA,
+            SommelierResponse,
+            WINE_TOOLS,
+            build_unified_user_prompt,
+            render_response_text,
+        )
 
         settings = get_settings()
         max_iterations = settings.agent_max_iterations
@@ -777,16 +789,27 @@ class SommelierService:
                     user_prompt=user_prompt,
                     tools=WINE_TOOLS,
                     messages=messages,
+                    response_format=SOMMELIER_RESPONSE_SCHEMA,
                 )
 
-                # No tool calls — return content directly
+                # Handle refusal or truncation
+                finish_reason = getattr(response, "finish_reason", None)
+                if finish_reason == "refusal":
+                    logger.warning("LLM refused structured output, returning as-is")
+                    return (response.content or "", [])
+                if finish_reason == "length":
+                    logger.warning("LLM response truncated (finish_reason=length)")
+                    return (response.content or "", [])
+
+                # No tool calls — parse JSON response
                 if not response.tool_calls:
                     self._update_langfuse_metadata(tools_used, iteration)
+                    content = response.content or ""
                     logger.debug(
                         "Agent loop done: iterations=%d, tools_used=%s, content_start=%r",
-                        iteration, tools_used, (response.content or "")[:150],
+                        iteration, tools_used, content[:150],
                     )
-                    return response.content
+                    return self._parse_final_response(content)
 
                 # Append assistant message with tool_calls as a dict
                 assistant_msg = {"role": "assistant", "content": response.content}
@@ -830,13 +853,36 @@ class SommelierService:
                 user_prompt=user_prompt,
                 tools=None,
                 messages=messages,
+                response_format=SOMMELIER_RESPONSE_SCHEMA,
             )
             self._update_langfuse_metadata(tools_used, iteration)
-            return response.content
+            content = response.content or ""
+            return self._parse_final_response(content)
 
         except Exception as e:
             logger.exception("Agent loop error (tool use may not be supported): %s", e)
             return None
+
+    @staticmethod
+    def _parse_final_response(content: str) -> tuple[str, list[str]]:
+        """Parse final LLM response: try JSON structured output, fallback to raw text."""
+        from app.services.sommelier_prompts import SommelierResponse, render_response_text
+
+        stripped = content.strip()
+        if stripped.startswith("{"):
+            try:
+                parsed = SommelierResponse.model_validate_json(stripped)
+                rendered = render_response_text(parsed)
+                wine_names = [w.wine_name for w in parsed.wines]
+                logger.info(
+                    "Parsed structured response: type=%s, wines=%d",
+                    parsed.response_type, len(wine_names),
+                )
+                return (rendered, wine_names)
+            except Exception as e:
+                logger.warning("JSON parse failed in agent response: %s", e)
+
+        return (content, [])
 
     @staticmethod
     def _update_langfuse_metadata(tools_used: list[str], iterations: int) -> None:

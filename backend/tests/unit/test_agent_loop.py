@@ -127,7 +127,7 @@ class TestSingleIterationWithToolCall:
         service.execute_search_wines.assert_called_once()
 
         # Final content should be returned
-        assert result == "[INTRO]Great red wines![/INTRO]"
+        assert result[0] == "[INTRO]Great red wines![/INTRO]"
 
     async def test_tool_call_arguments_parsed_and_forwarded(self):
         """Arguments from the tool_call should be parsed and passed to execute_search_wines."""
@@ -190,7 +190,7 @@ class TestMaxIterationsLimit:
                 user_message="Find red wine",
             )
 
-        assert result == "Final answer after max iterations."
+        assert result[0] == "Final answer after max iterations."
         # LLM should have been called 3 times: 2 with tools + 1 final without
         assert service.llm_service.generate_with_tools.call_count == 3
 
@@ -254,7 +254,7 @@ class TestNoToolCallsDirectResponse:
             user_message="Tell me about Merlot",
         )
 
-        assert result == "[INTRO]Merlot is a wonderful grape...[/INTRO]"
+        assert result[0] == "[INTRO]Merlot is a wonderful grape...[/INTRO]"
         # No tools should have been executed
         service.execute_search_wines.assert_not_called()
 
@@ -666,7 +666,7 @@ class TestCombinedToolCalls:
         service.execute_search_wines.assert_called_once()
         service.execute_semantic_search.assert_called_once()
 
-        assert result == "[INTRO]Here are elegant reds![/INTRO]"
+        assert result[0] == "[INTRO]Here are elegant reds![/INTRO]"
 
     async def test_both_tool_results_in_messages(self):
         """Messages for second LLM call should contain results from both tools."""

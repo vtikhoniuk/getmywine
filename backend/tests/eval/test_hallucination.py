@@ -22,20 +22,33 @@ _HALLUCINATION_QUERIES = [
 @pytest.mark.parametrize("query", _HALLUCINATION_QUERIES, ids=lambda q: q[:30])
 async def test_no_hallucinated_wines(sommelier_service, catalog_wines, query):
     """Every wine mentioned in the response must exist in the catalog."""
-    response = await sommelier_service.generate_agentic_response(
+    result = await sommelier_service.generate_agentic_response(
         system_prompt=SYSTEM_PROMPT_AGENTIC,
         user_message=query,
     )
 
-    assert response is not None, f"Agent returned None for: {query!r}"
-
-    parsed = parse_structured_response(response)
-    if not parsed.wines:
-        # No wine sections found — nothing to validate
-        pytest.skip("No wine sections in response")
+    assert result is not None, f"Agent returned None for: {query!r}"
+    response_text, wine_names = result
 
     # Build catalog name set (lowered for fuzzy matching)
     catalog_names = {w.name.lower() for w in catalog_wines}
+
+    # Fast path: structured output provides exact wine names
+    if wine_names:
+        for i, name in enumerate(wine_names, 1):
+            found = name.lower() in catalog_names
+            assert found, (
+                f"WINE:{i} may be hallucinated.\n"
+                f"Wine name: {name!r}\n"
+                f"Query: {query!r}\n"
+                f"Catalog has {len(catalog_names)} wines."
+            )
+        return
+
+    # Fallback: parse response text (legacy/heuristic responses)
+    parsed = parse_structured_response(response_text)
+    if not parsed.wines:
+        pytest.skip("No wine sections in response")
 
     for i, wine_text in enumerate(parsed.wines, 1):
         # First line of wine section is the name (possibly in bold)
