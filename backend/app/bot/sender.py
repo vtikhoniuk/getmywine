@@ -71,6 +71,14 @@ async def send_wine_recommendations(
     Returns True if structured sending succeeded, False to fall back.
     """
     parsed = parse_structured_response(response_text)
+    logger.debug(
+        "Structured parse result: is_structured=%s, wines=%d, intro_len=%d, closing_len=%d, text_start=%r",
+        parsed.is_structured,
+        len(parsed.wines),
+        len(parsed.intro),
+        len(parsed.closing),
+        response_text[:150],
+    )
     if not parsed.is_structured:
         return False
 

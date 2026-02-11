@@ -20,7 +20,12 @@ SYSTEM_PROMPT_BASE = """Ты — GetMyWine, виртуальный сомель�
 4. Никогда не выдумывай вина — только из предоставленного каталога
 5. Если нет подходящего вина — честно скажи и предложи ближайшую альтернативу
 
-ФОРМАТ ОТВЕТА (обязательно используй маркеры секций):
+ФОРМАТ ОТВЕТА — КРИТИЧЕСКИ ВАЖНО:
+
+Каждый ответ с рекомендациями вин ОБЯЗАН содержать литеральные маркеры секций.
+Без маркеров сообщение не будет корректно отображено пользователю.
+
+Пример структуры (маркеры обязательны дословно):
 
 [INTRO]
 Краткое вступление (1-2 предложения, связь с контекстом)
@@ -32,18 +37,25 @@ SYSTEM_PROMPT_BASE = """Ты — GetMyWine, виртуальный сомель�
 [/WINE:1]
 
 [WINE:2]
-(аналогично)
+**Название вина, регион, страна, год, цена**
+Описание (2-3 предложения)
 [/WINE:2]
 
 [WINE:3]
-(аналогично)
+**Название вина, регион, страна, год, цена**
+Описание (2-3 предложения)
 [/WINE:3]
 
 [CLOSING]
 Вопрос для продолжения диалога
 [/CLOSING]
 
-Всегда используй маркеры [INTRO], [WINE:1], [WINE:2], [WINE:3], [CLOSING].
+ПРАВИЛА МАРКЕРОВ:
+- Открывающий маркер [INTRO] и закрывающий [/INTRO] обязательны
+- Каждое вино оборачивай в [WINE:N]...[/WINE:N] где N = 1, 2, 3
+- Закрывающий [CLOSING]...[/CLOSING] обязателен
+- НИКОГДА не пропускай маркеры — они используются для разбивки на отдельные сообщения
+- Даже если рекомендуешь только 1-2 вина, используй маркеры для каждого
 
 СТИЛЬ:
 - Отвечай только на русском языке
@@ -160,7 +172,7 @@ SYSTEM_PROMPT_AGENTIC = SYSTEM_PROMPT_BASE + """
 1. Проанализируй запрос пользователя и определи, нужен ли поиск
 2. Вызови подходящий инструмент (или оба, если запрос сочетает конкретные и абстрактные критерии)
 3. Из результатов выбери 3 лучших вина
-4. Сформируй ответ в формате [INTRO][WINE:1-3][CLOSING]
+4. Сформируй ответ ОБЯЗАТЕЛЬНО с литеральными маркерами [INTRO]...[/INTRO], [WINE:1]...[/WINE:1], [WINE:2]...[/WINE:2], [WINE:3]...[/WINE:3], [CLOSING]...[/CLOSING]
 
 ## ВАЖНО: параметры поиска
 
@@ -170,9 +182,11 @@ SYSTEM_PROMPT_AGENTIC = SYSTEM_PROMPT_BASE + """
 
 ## Когда НЕ нужны инструменты
 
-- Общие вопросы о вине (история, регионы, сорта) — отвечай из своих знаний
+- Общие вопросы о вине (история, регионы, сорта) — отвечай из своих знаний, но если можешь предложить вина из каталога — используй инструменты и формат с маркерами
 - Продолжение разговора без нового поиска
 - Уточняющие вопросы к пользователю
+
+Даже без инструментов, если ответ содержит рекомендации вин — используй маркеры [INTRO]...[/INTRO], [WINE:N]...[/WINE:N], [CLOSING]...[/CLOSING].
 
 ## Если результатов мало
 
@@ -251,6 +265,10 @@ class ParsedResponse:
 def parse_structured_response(text: str) -> ParsedResponse:
     """Parse LLM response with [INTRO]/[WINE:N]/[CLOSING] markers.
 
+    First tries explicit markers. If not found, falls back to
+    heuristic parsing that detects wine blocks by price pattern
+    (e.g. "Name, Region, Country, Year, 580 руб.").
+
     Returns ParsedResponse with is_structured=True if at least
     intro and one wine section were found.
     """
@@ -277,7 +295,66 @@ def parse_structured_response(text: str) -> ParsedResponse:
 
     # Structured if we found at least the intro marker
     result.is_structured = bool(result.intro)
+
+    # Fallback: heuristic parsing when markers are absent
+    if not result.is_structured:
+        fallback = _parse_heuristic(text)
+        if fallback is not None:
+            fallback.guard_type = result.guard_type
+            return fallback
+
     return result
+
+
+# Pattern: line containing a price like "580 руб" or "580₽" — likely a wine header
+_WINE_HEADER_RE = re.compile(
+    r"^(\*{0,2})(.+?,\s*.+?,\s*\d{3,5}\s*(?:руб\.?|₽))(\*{0,2})\s*$",
+    re.MULTILINE,
+)
+
+
+def _parse_heuristic(text: str) -> Optional[ParsedResponse]:
+    """Heuristic fallback: detect wine blocks by price pattern in text.
+
+    Looks for lines matching "Name, Region, Country, Year, Price"
+    and splits the text into intro / wine sections / closing.
+    Returns None if fewer than 1 wine block detected.
+    """
+    matches = list(_WINE_HEADER_RE.finditer(text))
+    if not matches:
+        return None
+
+    result = ParsedResponse()
+
+    # Intro: everything before the first wine header
+    intro_text = text[: matches[0].start()].strip()
+    if intro_text:
+        result.intro = intro_text
+
+    # Wine sections: from each header to the next header (or end-of-text)
+    for i, match in enumerate(matches):
+        start = match.start()
+        if i + 1 < len(matches):
+            end = matches[i + 1].start()
+        else:
+            end = len(text)
+        wine_block = text[start:end].strip()
+
+        # Try to split off closing (last paragraph after last wine)
+        if i == len(matches) - 1:
+            # Look for a trailing question (closing) after the wine description
+            paragraphs = wine_block.split("\n\n")
+            if len(paragraphs) >= 2:
+                last_para = paragraphs[-1].strip()
+                if "?" in last_para:
+                    result.closing = last_para
+                    wine_block = "\n\n".join(paragraphs[:-1]).strip()
+
+        if len(result.wines) < 3:
+            result.wines.append(wine_block)
+
+    result.is_structured = bool(result.intro) and len(result.wines) >= 1
+    return result if result.is_structured else None
 
 
 # =============================================================================

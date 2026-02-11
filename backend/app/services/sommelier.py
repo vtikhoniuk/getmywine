@@ -782,6 +782,10 @@ class SommelierService:
                 # No tool calls — return content directly
                 if not response.tool_calls:
                     self._update_langfuse_metadata(tools_used, iteration)
+                    logger.debug(
+                        "Agent loop done: iterations=%d, tools_used=%s, content_start=%r",
+                        iteration, tools_used, (response.content or "")[:150],
+                    )
                     return response.content
 
                 # Append assistant message with tool_calls as a dict
