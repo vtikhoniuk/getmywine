@@ -28,20 +28,21 @@ async def test_no_hallucinated_wines(sommelier_service, catalog_wines, query):
     )
 
     assert result is not None, f"Agent returned None for: {query!r}"
-    response_text, wine_names = result
+    response_text, wine_ids = result
 
-    # Build catalog name set (lowered for fuzzy matching)
+    # Build catalog ID set for validation
+    catalog_ids = {str(w.id) for w in catalog_wines}
     catalog_names = {w.name.lower() for w in catalog_wines}
 
-    # Fast path: structured output provides exact wine names
-    if wine_names:
-        for i, name in enumerate(wine_names, 1):
-            found = name.lower() in catalog_names
+    # Fast path: structured output provides wine IDs
+    if wine_ids:
+        for i, wid in enumerate(wine_ids, 1):
+            found = wid in catalog_ids
             assert found, (
                 f"WINE:{i} may be hallucinated.\n"
-                f"Wine name: {name!r}\n"
+                f"Wine ID: {wid!r}\n"
                 f"Query: {query!r}\n"
-                f"Catalog has {len(catalog_names)} wines."
+                f"Catalog has {len(catalog_ids)} wines."
             )
         return
 

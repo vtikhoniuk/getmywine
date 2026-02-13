@@ -36,25 +36,25 @@ async def test_valid_structured_json(sommelier_service, query, expected_type):
     )
 
     assert result is not None, f"Agent returned None for: {query!r}"
-    response_text, wine_names = result
+    response_text, wine_ids = result
 
-    # wine_names should be a list (possibly empty)
-    assert isinstance(wine_names, list), (
-        f"wine_names should be list, got {type(wine_names)}\n"
+    # wine_ids should be a list (possibly empty)
+    assert isinstance(wine_ids, list), (
+        f"wine_ids should be list, got {type(wine_ids)}\n"
         f"Query: {query!r}"
     )
 
     if expected_type == "recommendation":
-        # Should have wine names
-        assert len(wine_names) >= 1, (
-            f"Expected wine_names for recommendation query: {query!r}\n"
-            f"Got: {wine_names}"
+        # Should have wine IDs
+        assert len(wine_ids) >= 1, (
+            f"Expected wine_ids for recommendation query: {query!r}\n"
+            f"Got: {wine_ids}"
         )
     elif expected_type == "informational":
-        # Should have no wine names
-        assert len(wine_names) == 0, (
-            f"Expected no wine_names for informational query: {query!r}\n"
-            f"Got: {wine_names}"
+        # Should have no wine IDs
+        assert len(wine_ids) == 0, (
+            f"Expected no wine_ids for informational query: {query!r}\n"
+            f"Got: {wine_ids}"
         )
 
 
@@ -63,15 +63,15 @@ async def test_valid_structured_json(sommelier_service, query, expected_type):
     [q for q, _ in _STRUCTURED_OUTPUT_QUERIES[:3]],
     ids=lambda q: q[:30],
 )
-async def test_wine_names_not_empty_strings(sommelier_service, query):
-    """Wine names from structured output should not be empty strings."""
+async def test_wine_ids_not_empty_strings(sommelier_service, query):
+    """Wine IDs from structured output should not be empty strings."""
     result = await sommelier_service.generate_agentic_response(
         system_prompt=SYSTEM_PROMPT_AGENTIC,
         user_message=query,
     )
 
     assert result is not None
-    _, wine_names = result
+    _, wine_ids = result
 
-    for name in wine_names:
-        assert name.strip(), f"Empty wine_name in response for: {query!r}"
+    for wid in wine_ids:
+        assert wid.strip(), f"Empty wine_id in response for: {query!r}"

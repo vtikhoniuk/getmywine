@@ -196,6 +196,10 @@ async def send_fallback_response(
 
     # Strip any leftover section markers so tags aren't visible to user
     clean_text = _SECTION_MARKERS_RE.sub("", response_text).strip()
+    if not clean_text:
+        logger.warning("Fallback response text is empty after cleanup, using error message")
+        from app.bot.messages import ERROR_LLM_UNAVAILABLE
+        clean_text = ERROR_LLM_UNAVAILABLE
     await update.message.reply_text(
         sanitize_telegram_markdown(clean_text),
         parse_mode="Markdown",

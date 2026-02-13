@@ -17,6 +17,7 @@ def _make_welcome_json(wine_count: int = 3) -> str:
     """Build a valid SommelierResponse JSON for welcome message."""
     wines = [
         {
+            "wine_id": f"00000000-0000-0000-0000-00000000000{i}",
             "wine_name": f"Welcome Wine {i}",
             "description": f"**Welcome Wine {i}, Region {i}, Country, 2020, {1000 + i * 500} руб.**\nОтличный выбор для знакомства.",
         }
@@ -96,14 +97,17 @@ class TestStructuredWelcomeFlow:
                 "intro": "С возвращением! На основе ваших предпочтений:",
                 "wines": [
                     {
+                        "wine_id": "00000000-0000-0000-0000-000000000001",
                         "wine_name": "Profile Wine 1",
                         "description": "**Profile Wine 1, Тоскана, Италия, 2019, 2500 руб.**\nПодходит под ваш профиль.",
                     },
                     {
+                        "wine_id": "00000000-0000-0000-0000-000000000002",
                         "wine_name": "Profile Wine 2",
                         "description": "**Profile Wine 2, Бордо, Франция, 2018, 3500 руб.**\nВам понравится это вино.",
                     },
                     {
+                        "wine_id": "00000000-0000-0000-0000-000000000003",
                         "wine_name": "Profile Wine 3",
                         "description": "**Profile Wine 3, Мендоса, Аргентина, 2020, 1800 руб.**\nНовый опыт для вас.",
                     },

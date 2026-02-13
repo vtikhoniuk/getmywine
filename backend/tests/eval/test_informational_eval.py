@@ -63,12 +63,12 @@ async def test_informational_intro_length(sommelier_service, query):
     )
 
     assert result is not None, f"Agent returned None for: {query!r}"
-    response_text, wine_names = result
+    response_text, wine_ids = result
 
     # Should be informational (no wines)
-    assert len(wine_names) == 0, (
+    assert len(wine_ids) == 0, (
         f"Expected no wines for informational query: {query!r}\n"
-        f"Got wine_names: {wine_names}"
+        f"Got wine_ids: {wine_ids}"
     )
 
     intro, _ = _extract_intro_and_closing(response_text)
@@ -175,9 +175,9 @@ async def test_recommendation_regression(sommelier_service, query):
     )
 
     assert result is not None, f"Agent returned None for: {query!r}"
-    _, wine_names = result
+    _, wine_ids = result
 
-    assert len(wine_names) >= 1, (
-        f"Expected wine_names for recommendation query: {query!r}\n"
-        f"Got: {wine_names}"
+    assert len(wine_ids) >= 1, (
+        f"Expected wine_ids for recommendation query: {query!r}\n"
+        f"Got: {wine_ids}"
     )

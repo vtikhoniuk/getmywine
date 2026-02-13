@@ -10,6 +10,11 @@ import json
 import pytest
 
 
+# Helper: build a wine dict with wine_id for JSON tests
+def _wine(name: str, desc: str, wid: str = "00000000-0000-0000-0000-000000000001") -> dict:
+    return {"wine_id": wid, "wine_name": name, "description": desc}
+
+
 # =============================================================================
 # T003: Pydantic model tests
 # =============================================================================
@@ -22,30 +27,55 @@ class TestWineRecommendation:
         from app.services.sommelier_prompts import WineRecommendation
 
         wine = WineRecommendation(
+            wine_id="00000000-0000-0000-0000-000000000001",
             wine_name="Chateau Margaux 2018",
             description="Классическое бордо с мощными танинами.",
         )
         assert wine.wine_name == "Chateau Margaux 2018"
+        assert wine.wine_id == "00000000-0000-0000-0000-000000000001"
         assert wine.description == "Классическое бордо с мощными танинами."
 
     def test_wine_recommendation_from_json(self):
         from app.services.sommelier_prompts import WineRecommendation
 
-        raw = '{"wine_name": "Barolo DOCG 2019", "description": "Итальянская классика."}'
+        raw = json.dumps({
+            "wine_id": "00000000-0000-0000-0000-000000000001",
+            "wine_name": "Barolo DOCG 2019",
+            "description": "Итальянская классика.",
+        })
         wine = WineRecommendation.model_validate_json(raw)
         assert wine.wine_name == "Barolo DOCG 2019"
+        assert wine.wine_id == "00000000-0000-0000-0000-000000000001"
 
     def test_wine_recommendation_missing_name_raises(self):
         from app.services.sommelier_prompts import WineRecommendation
 
         with pytest.raises(Exception):
-            WineRecommendation(wine_name="", description="Some desc")
+            WineRecommendation(
+                wine_id="00000000-0000-0000-0000-000000000001",
+                wine_name="",
+                description="Some desc",
+            )
 
     def test_wine_recommendation_missing_description_raises(self):
         from app.services.sommelier_prompts import WineRecommendation
 
         with pytest.raises(Exception):
-            WineRecommendation(wine_name="Wine Name", description="")
+            WineRecommendation(
+                wine_id="00000000-0000-0000-0000-000000000001",
+                wine_name="Wine Name",
+                description="",
+            )
+
+    def test_wine_recommendation_missing_id_raises(self):
+        from app.services.sommelier_prompts import WineRecommendation
+
+        with pytest.raises(Exception):
+            WineRecommendation(
+                wine_id="",
+                wine_name="Wine Name",
+                description="Desc",
+            )
 
 
 class TestSommelierResponse:
@@ -58,9 +88,9 @@ class TestSommelierResponse:
             response_type="recommendation",
             intro="Вот подборка!",
             wines=[
-                {"wine_name": "Wine A", "description": "Desc A"},
-                {"wine_name": "Wine B", "description": "Desc B"},
-                {"wine_name": "Wine C", "description": "Desc C"},
+                _wine("Wine A", "Desc A", "00000000-0000-0000-0000-000000000001"),
+                _wine("Wine B", "Desc B", "00000000-0000-0000-0000-000000000002"),
+                _wine("Wine C", "Desc C", "00000000-0000-0000-0000-000000000003"),
             ],
             closing="Что-нибудь ещё?",
             guard_type=None,
@@ -68,6 +98,7 @@ class TestSommelierResponse:
         assert resp.response_type == "recommendation"
         assert len(resp.wines) == 3
         assert resp.wines[0].wine_name == "Wine A"
+        assert resp.wines[0].wine_id == "00000000-0000-0000-0000-000000000001"
         assert resp.guard_type is None
 
     def test_valid_informational_response(self):
@@ -102,7 +133,7 @@ class TestSommelierResponse:
         resp = SommelierResponse(
             response_type="recommendation",
             intro="Intro",
-            wines=[{"wine_name": "W", "description": "D"}],
+            wines=[_wine("W", "D")],
             closing="Closing",
             guard_type=None,
         )
@@ -124,7 +155,7 @@ class TestSommelierResponse:
         from app.services.sommelier_prompts import SommelierResponse
 
         wines = [
-            {"wine_name": f"Wine {i}", "description": f"Desc {i}"}
+            _wine(f"Wine {i}", f"Desc {i}", f"00000000-0000-0000-0000-00000000000{i}")
             for i in range(3)
         ]
         resp = SommelierResponse(
@@ -157,6 +188,7 @@ class TestSommelierResponse:
                 "intro": "Отличный выбор!",
                 "wines": [
                     {
+                        "wine_id": "00000000-0000-0000-0000-000000000001",
                         "wine_name": "Chateau Margaux 2018",
                         "description": "Классическое бордо.",
                     }
@@ -168,6 +200,7 @@ class TestSommelierResponse:
         resp = SommelierResponse.model_validate_json(raw)
         assert resp.response_type == "recommendation"
         assert resp.wines[0].wine_name == "Chateau Margaux 2018"
+        assert resp.wines[0].wine_id == "00000000-0000-0000-0000-000000000001"
 
     def test_invalid_json_raises(self):
         from app.services.sommelier_prompts import SommelierResponse
@@ -195,6 +228,15 @@ class TestSommelierResponseSchema:
         assert "guard_type" in schema["properties"]
         assert schema["additionalProperties"] is False
 
+    def test_wine_schema_includes_wine_id(self):
+        from app.services.sommelier_prompts import SOMMELIER_RESPONSE_SCHEMA
+
+        wine_props = SOMMELIER_RESPONSE_SCHEMA["json_schema"]["schema"][
+            "properties"]["wines"]["items"]["properties"]
+        assert "wine_id" in wine_props
+        assert "wine_name" in wine_props
+        assert "description" in wine_props
+
 
 # =============================================================================
 # T004: parse_structured_response() — JSON and legacy markers
@@ -212,9 +254,9 @@ class TestParseStructuredResponseJSON:
                 "response_type": "recommendation",
                 "intro": "К рыбе подойдут эти вина.",
                 "wines": [
-                    {"wine_name": "Chablis 2022", "description": "Шардоне из Бургундии."},
-                    {"wine_name": "Sancerre 2021", "description": "Совиньон Блан из Луары."},
-                    {"wine_name": "Riesling 2020", "description": "Немецкий рислинг."},
+                    _wine("Chablis 2022", "Шардоне из Бургундии.", "00000000-0000-0000-0000-000000000001"),
+                    _wine("Sancerre 2021", "Совиньон Блан из Луары.", "00000000-0000-0000-0000-000000000002"),
+                    _wine("Riesling 2020", "Немецкий рислинг.", "00000000-0000-0000-0000-000000000003"),
                 ],
                 "closing": "Какое вино вас заинтересовало?",
                 "guard_type": None,
@@ -274,7 +316,7 @@ class TestParseStructuredResponseJSON:
                 "response_type": "recommendation",
                 "intro": "Нашёл одно вино.",
                 "wines": [
-                    {"wine_name": "Solo Wine", "description": "Единственный вариант."},
+                    _wine("Solo Wine", "Единственный вариант."),
                 ],
                 "closing": "Хотите расширить поиск?",
                 "guard_type": None,
@@ -346,9 +388,9 @@ class TestRenderResponseText:
             response_type="recommendation",
             intro="К стейку подойдут:",
             wines=[
-                {"wine_name": "Wine A", "description": "**Wine A, Bordeaux, 2018, 4500 руб.**\nОписание A."},
-                {"wine_name": "Wine B", "description": "**Wine B, Piedmont, 2019, 3200 руб.**\nОписание B."},
-                {"wine_name": "Wine C", "description": "**Wine C, Mendoza, 2020, 1800 руб.**\nОписание C."},
+                _wine("Wine A", "**Wine A, Bordeaux, 2018, 4500 руб.**\nОписание A.", "00000000-0000-0000-0000-000000000001"),
+                _wine("Wine B", "**Wine B, Piedmont, 2019, 3200 руб.**\nОписание B.", "00000000-0000-0000-0000-000000000002"),
+                _wine("Wine C", "**Wine C, Mendoza, 2020, 1800 руб.**\nОписание C.", "00000000-0000-0000-0000-000000000003"),
             ],
             closing="Какой ценовой диапазон?",
             guard_type=None,
@@ -394,7 +436,7 @@ class TestRenderResponseText:
         resp = SommelierResponse(
             response_type="recommendation",
             intro="Одно вино:",
-            wines=[{"wine_name": "Solo", "description": "Единственное."}],
+            wines=[_wine("Solo", "Единственное.")],
             closing="Ещё?",
             guard_type=None,
         )
@@ -410,7 +452,7 @@ class TestRenderResponseText:
         resp = SommelierResponse(
             response_type="recommendation",
             intro="Intro",
-            wines=[{"wine_name": "W", "description": "D"}],
+            wines=[_wine("W", "D")],
             closing="Closing",
             guard_type=None,
         )

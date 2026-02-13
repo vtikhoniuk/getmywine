@@ -36,7 +36,7 @@ down:
 restart:
 	docker-compose restart backend
 
-logs:
+logs-backend:
 	docker logs -f getmywine-backend
 
 logs-bot:
@@ -45,15 +45,15 @@ logs-bot:
 logs-all:
 	docker-compose logs -f
 
-# Testing
+# Testing (local)
 test:
-	docker exec getmywine-backend python -m pytest tests/
+	cd backend && python3 -m pytest tests/unit/
 
 test-v:
-	docker exec getmywine-backend python -m pytest tests/ -v
+	cd backend && python3 -m pytest tests/unit/ -v
 
 test-cov:
-	docker exec getmywine-backend python -m pytest tests/ --cov=app --cov-report=term-missing
+	cd backend && python3 -m pytest tests/unit/ --cov=app --cov-report=term-missing
 
 # Linting
 lint:

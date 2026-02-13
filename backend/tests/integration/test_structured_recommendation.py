@@ -17,6 +17,7 @@ def _make_json_response(wine_count: int = 3) -> str:
     """Build a valid SommelierResponse JSON string."""
     wines = [
         {
+            "wine_id": f"00000000-0000-0000-0000-00000000000{i}",
             "wine_name": f"Test Wine {i}",
             "description": f"**Test Wine {i}, Region {i}, Country, 2020, {1000 + i * 500} руб.**\nОписание вина {i}.",
         }

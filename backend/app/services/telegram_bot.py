@@ -241,14 +241,7 @@ class TelegramBotService:
         language = detect_language(message_text, telegram_locale)
         language_instruction = get_language_instruction(language)
 
-        # Save user message
-        await self.message_repo.create(
-            conversation_id=conversation.id,
-            role=MessageRole.USER,
-            content=message_text,
-        )
-
-        # Get conversation history for context
+        # Get conversation history for context (BEFORE saving new message)
         history = await self.get_conversation_history(
             conversation.id,
             limit=10,  # Last 10 messages for context
@@ -258,33 +251,51 @@ class TelegramBotService:
             # Get recommendation from SommelierService
             # Prepend language instruction to message for LLM context
             enhanced_message = f"{language_instruction}\n\n{message_text}"
-            # history includes the just-saved user message;
-            # >1 means there were prior exchanges in this session
-            is_continuation = len(history) > 1
-            response_text, wine_names = await self.sommelier.generate_response(
+            # >0 means there were prior exchanges in this session
+            is_continuation = len(history) > 0
+            response_text, wine_ids = await self.sommelier.generate_response(
                 user_message=enhanced_message,
                 user_profile=None,  # TODO: Add user profile support
                 conversation_history=history,
                 is_continuation=is_continuation,
             )
 
-            # Extract recommended wines mentioned in the LLM response
+            # Extract recommended wines by ID from structured output
             wines = await self._extract_wines_from_response(
-                response_text, wine_names=wine_names,
+                response_text, wine_ids=wine_ids,
             )
+
+            is_error = False
 
         except Exception as e:
             logger.exception("Error getting recommendation: %s", e)
             response_text = ERROR_LLM_UNAVAILABLE if language == "ru" else \
                 "Sorry, the recommendation service is temporarily unavailable."
             wines = []
+            is_error = True
 
-        # Save assistant response
-        await self.message_repo.create(
-            conversation_id=conversation.id,
-            role=MessageRole.ASSISTANT,
-            content=response_text,
-        )
+        # Save messages to history only on success — failed exchanges
+        # must NOT pollute conversation context (prevents "history poisoning"
+        # where an empty/error response confuses the LLM on subsequent turns).
+        if is_error or not response_text or not response_text.strip():
+            logger.warning(
+                "Skipping history save for failed response (empty=%s, error=%s)",
+                not response_text or not response_text.strip(), is_error,
+            )
+            if not response_text or not response_text.strip():
+                response_text = ERROR_LLM_UNAVAILABLE
+        else:
+            # Save both user message and assistant response together
+            await self.message_repo.create(
+                conversation_id=conversation.id,
+                role=MessageRole.USER,
+                content=message_text,
+            )
+            await self.message_repo.create(
+                conversation_id=conversation.id,
+                role=MessageRole.ASSISTANT,
+                content=response_text,
+            )
 
         # Update conversation timestamp
         await self.conversation_repo.update_timestamp(conversation)
@@ -296,48 +307,34 @@ class TelegramBotService:
         self,
         response_text: str,
         max_wines: int = 3,
-        wine_names: Optional[list[str]] = None,
+        wine_ids: Optional[list[str]] = None,
     ) -> list[Wine]:
-        """Extract wines mentioned in the LLM response by matching names.
+        """Extract wines from structured output by ID lookup.
 
-        When wine_names is provided (from structured output), uses direct
-        name lookup for 100% reliable matching. Falls back to text search
-        when wine_names is empty (legacy/heuristic responses).
+        wine_ids comes from _parse_final_response() and is always a list:
+        - Non-empty list → recommendation, look up wines by ID
+        - Empty list [] → informational/off_topic, no wines to show
 
         Args:
-            response_text: LLM-generated response text
+            response_text: LLM-generated response text (unused, kept for API compat)
             max_wines: Maximum number of wines to return
-            wine_names: Wine names from structured JSON output (if available)
+            wine_ids: Wine UUID strings from structured JSON output
 
         Returns:
             List of matched Wine objects, in order
         """
-        all_wines = await self.wine_repo.get_list(limit=100)
+        if not wine_ids:
+            return []
 
-        # Fast path: structured output provides exact wine names
-        if wine_names:
-            wine_by_name = {w.name: w for w in all_wines}
-            result = []
-            for name in wine_names[:max_wines]:
-                wine = wine_by_name.get(name)
-                if wine:
-                    result.append(wine)
-                else:
-                    logger.warning("Wine name from structured output not found in catalog: %r", name)
-            return result
+        # Convert string IDs to UUIDs, skip invalid
+        valid_uuids = []
+        for wid in wine_ids[:max_wines]:
+            try:
+                valid_uuids.append(uuid.UUID(wid))
+            except (ValueError, AttributeError):
+                logger.warning("Invalid wine_id from structured output: %r", wid)
 
-        # Fallback: text-based matching (legacy responses)
-        found: list[tuple[int, Wine]] = []
-        found_ids: set = set()
+        if not valid_uuids:
+            return []
 
-        for wine in all_wines:
-            if wine.id in found_ids:
-                continue
-
-            pos = response_text.find(wine.name)
-            if pos != -1:
-                found.append((pos, wine))
-                found_ids.add(wine.id)
-
-        found.sort(key=lambda x: x[0])
-        return [wine for _, wine in found[:max_wines]]
+        return await self.wine_repo.get_by_ids(valid_uuids)

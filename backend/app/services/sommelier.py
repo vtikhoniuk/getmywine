@@ -418,8 +418,8 @@ class SommelierService:
             is_continuation: Whether this continues an existing conversation
 
         Returns:
-            Tuple of (rendered_text, wine_names) where wine_names is a list
-            of wine names from the structured response (empty if fallback).
+            Tuple of (rendered_text, wine_ids) where wine_ids is a list
+            of wine UUID strings from the structured response (empty if fallback).
         """
         from app.services.sommelier_prompts import SYSTEM_PROMPT_AGENTIC
 
@@ -450,26 +450,19 @@ class SommelierService:
             )
 
             if result is not None:
-                logger.info(
-                    "Generated agentic response for: %s (history: %d msgs)",
-                    user_message[:50],
-                    len(conversation_history) if conversation_history else 0,
-                )
+                response_text, wine_ids = result
+                if not response_text or not response_text.strip():
+                    logger.warning(
+                        "Agent returned empty response text for: %s",
+                        user_message[:50],
+                    )
+                else:
+                    logger.info(
+                        "Generated agentic response for: %s (history: %d msgs)",
+                        user_message[:50],
+                        len(conversation_history) if conversation_history else 0,
+                    )
                 return result
-
-            logger.warning("Agent loop returned None, trying LLM without tools")
-
-            # Fallback: regular LLM call with wines embedded in prompt
-            fallback = await self._generate_llm_with_catalog(
-                system_prompt=system_prompt,
-                user_message=user_message,
-                conversation_history=conversation_history,
-                user_profile=user_profile,
-                events_context=events_context,
-            )
-            if fallback is not None:
-                # Fallback may return JSON (system prompt says "always JSON")
-                return self._parse_final_response(fallback)
 
             logger.warning("LLM fallback also failed, using mock")
 
@@ -754,7 +747,7 @@ class SommelierService:
     ) -> Optional[tuple[str, list[str]]]:
         """Agent loop: LLM -> tool_calls -> execute -> repeat (max iterations).
 
-        Returns tuple of (rendered_text, wine_names) or None on error.
+        Returns tuple of (rendered_text, wine_ids) or None on error.
         """
         from app.config import get_settings
         from app.services.sommelier_prompts import (
@@ -775,10 +768,11 @@ class SommelierService:
             events_context=events_context,
         )
 
-        # Build initial messages
+        # Build initial messages (trim history to avoid context overflow)
         messages: list[dict] = [{"role": "system", "content": system_prompt}]
         if conversation_history:
-            messages.extend(conversation_history)
+            max_history = settings.llm_max_history_messages
+            messages.extend(conversation_history[-max_history:])
         messages.append({"role": "user", "content": user_prompt})
 
         tools_used: list[str] = []
@@ -902,7 +896,12 @@ class SommelierService:
 
     @staticmethod
     def _parse_final_response(content: str) -> tuple[str, list[str]]:
-        """Parse final LLM response: try JSON structured output, fallback to raw text."""
+        """Parse final LLM response: try JSON structured output, fallback to raw text.
+
+        Returns:
+            Tuple of (rendered_text, wine_ids) where wine_ids is a list
+            of wine UUID strings from the structured response (empty if fallback).
+        """
         from app.services.sommelier_prompts import SommelierResponse, render_response_text
 
         json_str = SommelierService._extract_json_str(content)
@@ -911,12 +910,12 @@ class SommelierService:
             try:
                 parsed = SommelierResponse.model_validate_json(json_str)
                 rendered = render_response_text(parsed)
-                wine_names = [w.wine_name for w in parsed.wines]
+                wine_ids = [w.wine_id for w in parsed.wines]
                 logger.info(
                     "Parsed structured response: type=%s, wines=%d",
-                    parsed.response_type, len(wine_names),
+                    parsed.response_type, len(wine_ids),
                 )
-                return (rendered, wine_names)
+                return (rendered, wine_ids)
             except Exception as e:
                 logger.warning("Pydantic parse failed: %s — trying json.loads fallback", e)
 
@@ -926,7 +925,8 @@ class SommelierService:
                 intro = data.get("intro", "")
                 closing = data.get("closing", "")
                 wines_data = data.get("wines", [])
-                wine_names = [w.get("wine_name", "") for w in wines_data if isinstance(w, dict)]
+                wine_ids = [w.get("wine_id", "") for w in wines_data if isinstance(w, dict)]
+                wine_ids = [wid for wid in wine_ids if wid]  # filter empty
                 parts = [intro]
                 for w in wines_data:
                     if isinstance(w, dict) and w.get("description"):
@@ -935,9 +935,9 @@ class SommelierService:
                 rendered = "\n\n".join(p for p in parts if p)
                 logger.info(
                     "Fallback json.loads succeeded: wines=%d, rendered_len=%d",
-                    len(wine_names), len(rendered),
+                    len(wine_ids), len(rendered),
                 )
-                return (rendered, wine_names)
+                return (rendered, wine_ids)
             except Exception as e2:
                 logger.warning("json.loads fallback also failed: %s", e2)
 
@@ -974,6 +974,7 @@ def format_tool_response(wines: list, filters_applied: dict) -> str:
     wine_list = []
     for wine in wines:
         wine_data = {
+            "wine_id": str(wine.id),
             "name": wine.name,
             "producer": wine.producer,
             "region": wine.region,
@@ -1014,6 +1015,7 @@ def format_semantic_response(
     wine_list = []
     for wine, similarity_score in results:
         wine_data = {
+            "wine_id": str(wine.id),
             "name": wine.name,
             "producer": wine.producer,
             "region": wine.region,
