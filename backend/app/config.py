@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     llm_max_history_messages: int = 10  # How many previous messages to include
 
     # Agent loop (agentic RAG)
-    agent_max_iterations: int = 2  # Max tool call iterations per request
+    agent_max_iterations: int = 5  # Max tool call iterations per request
     embedding_model: str = "text-embedding-3-small"  # Model for query embeddings
     structured_output_max_retries: int = 2  # Retries after initial attempt (3 total)
 

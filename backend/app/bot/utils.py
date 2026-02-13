@@ -23,6 +23,11 @@ def sanitize_telegram_markdown(text: str) -> str:
     # Convert **double-asterisk bold** to *single-asterisk bold*
     text = re.sub(r"\*\*(.+?)\*\*", r"*\1*", text)
 
+    # Replace backticks — Telegram Markdown v1 treats ` as inline code.
+    # Wine names like "Barbera d`Asti" have unpaired backticks that break parsing.
+    # Use visually identical apostrophe instead.
+    text = text.replace("`", "'")
+
     return text
 
 

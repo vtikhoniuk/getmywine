@@ -362,7 +362,7 @@ def format_wine_recommendation(
     lines.append(f"{wine.region}, {wine.country}", )
     if wine.vintage_year:
         lines[-1] += f" · {wine.vintage_year}"
-    lines.append(f"~{wine.price_rub}₽")
+    lines.append(f"~{wine.price_rub:.0f}₽")
 
     # Grapes
     if wine.grape_varieties:

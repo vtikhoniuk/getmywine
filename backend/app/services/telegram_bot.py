@@ -288,8 +288,11 @@ class TelegramBotService:
             if is_empty:
                 response_text = ERROR_LLM_UNAVAILABLE
         else:
-            # Truncate for storage if needed (FR-011: show full to user, truncate for DB)
-            content_for_db = self._truncate_for_storage(response_text)
+            # Render JSON to plain text for history — LLM context should see
+            # readable text, not raw JSON. response_text may be JSON (structured
+            # output) or already plain text (fallback paths).
+            content_for_db = self._render_for_history(response_text)
+            content_for_db = self._truncate_for_storage(content_for_db)
             # Save both user message and assistant response together
             await self.message_repo.create(
                 conversation_id=conversation.id,
@@ -307,6 +310,24 @@ class TelegramBotService:
         await self.db.commit()
 
         return response_text, wines
+
+    @staticmethod
+    def _render_for_history(text: str) -> str:
+        """Render response to plain text for conversation history.
+
+        If text is JSON (structured output), renders it as readable text.
+        Otherwise returns as-is. LLM context should see human-readable text,
+        not raw JSON.
+        """
+        stripped = text.strip()
+        if not stripped.startswith("{"):
+            return text
+        try:
+            from app.services.sommelier_prompts import SommelierResponse, render_response_text
+            parsed = SommelierResponse.model_validate_json(stripped)
+            return render_response_text(parsed)
+        except Exception:
+            return text
 
     @staticmethod
     def _truncate_for_storage(text: str, max_length: int = 50_000) -> str:

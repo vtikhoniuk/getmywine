@@ -460,3 +460,103 @@ class TestRenderResponseText:
         assert "{" not in text
         assert "response_type" not in text
         assert "wine_name" not in text
+
+
+# =============================================================================
+# T006: validate_semantic_content() — placeholder detection
+# =============================================================================
+
+
+class TestValidateSemanticContent:
+    """Tests for validate_semantic_content() placeholder detection."""
+
+    def test_valid_recommendation_passes(self):
+        from app.services.sommelier_prompts import SommelierResponse, validate_semantic_content
+
+        resp = SommelierResponse(
+            response_type="recommendation",
+            intro="Вот подборка для вас!",
+            wines=[_wine("Wine A", "Описание вина A.")],
+            closing="Что-нибудь ещё?",
+            guard_type=None,
+        )
+        assert validate_semantic_content(resp) is None
+
+    def test_placeholder_intro_and_closing_rejected(self):
+        from app.services.sommelier_prompts import SommelierResponse, validate_semantic_content
+
+        resp = SommelierResponse(
+            response_type="informational",
+            intro="none",
+            wines=[],
+            closing="none",
+            guard_type=None,
+        )
+        error = validate_semantic_content(resp)
+        assert error is not None
+        assert "placeholder" in error
+
+    def test_placeholder_null_rejected(self):
+        from app.services.sommelier_prompts import SommelierResponse, validate_semantic_content
+
+        resp = SommelierResponse(
+            response_type="informational",
+            intro="null",
+            wines=[],
+            closing="null",
+            guard_type=None,
+        )
+        error = validate_semantic_content(resp)
+        assert error is not None
+
+    def test_placeholder_case_insensitive(self):
+        from app.services.sommelier_prompts import SommelierResponse, validate_semantic_content
+
+        resp = SommelierResponse(
+            response_type="informational",
+            intro="None",
+            wines=[],
+            closing="NONE",
+            guard_type=None,
+        )
+        error = validate_semantic_content(resp)
+        assert error is not None
+
+    def test_real_intro_with_placeholder_closing_passes(self):
+        from app.services.sommelier_prompts import SommelierResponse, validate_semantic_content
+
+        resp = SommelierResponse(
+            response_type="informational",
+            intro="Пино Нуар — один из самых благородных сортов.",
+            wines=[],
+            closing="none",
+            guard_type=None,
+        )
+        assert validate_semantic_content(resp) is None
+
+    def test_recommendation_no_wines_rejected(self):
+        from app.services.sommelier_prompts import SommelierResponse, validate_semantic_content
+
+        resp = SommelierResponse(
+            response_type="recommendation",
+            intro="Вот подборка!",
+            wines=[],
+            closing="Ещё?",
+            guard_type=None,
+        )
+        error = validate_semantic_content(resp)
+        assert error is not None
+        assert "empty" in error
+
+    def test_all_empty_strings_rejected(self):
+        from app.services.sommelier_prompts import SommelierResponse, validate_semantic_content
+
+        resp = SommelierResponse(
+            response_type="informational",
+            intro="",
+            wines=[],
+            closing="",
+            guard_type=None,
+        )
+        error = validate_semantic_content(resp)
+        assert error is not None

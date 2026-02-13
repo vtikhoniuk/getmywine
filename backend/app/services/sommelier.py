@@ -382,7 +382,7 @@ class SommelierService:
    Вино: {wine.name}
    Регион: {wine.region}, {wine.country}{vintage}
    Сорта: {grapes}
-   Цена: {wine.price_rub}₽
+   Цена: {wine.price_rub:.0f}₽
    Описание: {wine.description}
    Ноты: {wine.tasting_notes or 'N/A'}
    К блюдам: {pairings}
@@ -624,7 +624,7 @@ class SommelierService:
             line = (
                 f"- {wine.name} | {wine.producer} | {wine.country}, {wine.region} | "
                 f"{wine.wine_type.value}, {wine.sweetness.value} | "
-                f"{wine.price_rub}₽ | Сорта: {grapes} | К блюдам: {pairings}"
+                f"{wine.price_rub:.0f}₽ | Сорта: {grapes} | К блюдам: {pairings}"
             )
             if wine.description:
                 line += f" | {wine.description[:80]}"
@@ -661,10 +661,22 @@ class SommelierService:
             except ValueError:
                 pass
 
+        # Normalize country aliases to match catalog values
+        _COUNTRY_ALIASES = {
+            "сша": "Соединенные Штаты Америки",
+            "америка": "Соединенные Штаты Америки",
+            "соединённые штаты": "Соединенные Штаты Америки",
+            "соединенные штаты": "Соединенные Штаты Америки",
+            "united states": "Соединенные Штаты Америки",
+            "usa": "Соединенные Штаты Америки",
+        }
+
         # Pass through string filters
         for key in ("country", "region", "grape_variety", "food_pairing"):
             value = arguments.get(key)
             if value:
+                if key == "country":
+                    value = _COUNTRY_ALIASES.get(value.lower().strip(), value)
                 filters[key] = value
                 filters_applied[key] = value
 
@@ -683,34 +695,6 @@ class SommelierService:
             filters_applied["price_min"] = price_min
 
         wines = await self.wine_repo.get_list(**filters)
-
-        # Progressive auto-broadening: drop filters in order of priority until results found
-        # Step 1: drop wine_type/sweetness (LLM often guesses these)
-        # Step 2: also drop country (catalog may not have wines from requested country)
-        _BROADENING_STEPS = [
-            ("wine_type", "sweetness"),
-            ("country",),
-        ]
-        if not wines:
-            current = dict(filters)
-            all_dropped: list[str] = []
-            for drop_keys in _BROADENING_STEPS:
-                droppable = [k for k in drop_keys if k in current]
-                if not droppable:
-                    continue
-                for k in droppable:
-                    current.pop(k)
-                    all_dropped.append(k)
-                wines = await self.wine_repo.get_list(**current)
-                if wines:
-                    logger.info(
-                        "search_wines: broadened search (dropped %s), found=%d",
-                        all_dropped, len(wines),
-                    )
-                    for k in all_dropped:
-                        filters_applied.pop(k, None)
-                    filters_applied["broadened"] = True
-                    break
 
         logger.info("search_wines tool: filters=%s, found=%d", filters_applied, len(wines))
 
@@ -1052,13 +1036,15 @@ class SommelierService:
                 if semantic_error:
                     logger.warning("Semantic validation failed: %s", semantic_error)
                     return ParseResult(text="", wine_ids=[], error=semantic_error)
-                rendered = render_response_text(parsed)
                 wine_ids = [w.wine_id for w in parsed.wines]
                 logger.info(
                     "Parsed structured response: type=%s, wines=%d",
                     parsed.response_type, len(wine_ids),
                 )
-                return ParseResult(text=rendered, wine_ids=wine_ids)
+                # Return JSON so sender.py can parse it directly into
+                # structured sections (intro/wines/closing) without lossy
+                # re-parsing of rendered plain text.
+                return ParseResult(text=json_str, wine_ids=wine_ids)
             except Exception as e:
                 logger.warning("Pydantic parse failed: %s — trying json.loads fallback", e)
 
@@ -1145,7 +1131,7 @@ def format_tool_response(wines: list, filters_applied: dict) -> str:
             "body": wine.body,
             "tannins": wine.tannins,
             "acidity": wine.acidity,
-            "price_rub": float(wine.price_rub),
+            "price_rub": int(wine.price_rub),
             "description": wine.description,
             "tasting_notes": wine.tasting_notes,
             "food_pairings": wine.food_pairings,
@@ -1186,7 +1172,7 @@ def format_semantic_response(
             "body": wine.body,
             "tannins": wine.tannins,
             "acidity": wine.acidity,
-            "price_rub": float(wine.price_rub),
+            "price_rub": int(wine.price_rub),
             "description": wine.description,
             "tasting_notes": wine.tasting_notes,
             "food_pairings": wine.food_pairings,

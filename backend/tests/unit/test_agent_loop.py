@@ -47,7 +47,7 @@ VALID_SOMMELIER_JSON = json.dumps({
     ],
     "closing": "Хотите узнать больше о аргентинских винах?",
     "guard_type": None,
-})
+}, ensure_ascii=False)
 
 INVALID_JSON = '{"broken": true, "not_a_sommelier_response'
 
@@ -155,7 +155,7 @@ class TestSingleIterationWithToolCall:
         # execute_search_wines should have been called once
         service.execute_search_wines.assert_called_once()
 
-        # Final content should be the rendered structured response
+        # Final content should be the raw JSON structured response
         assert "Вот отличные варианты красного вина!" in result[0]
 
     async def test_tool_call_arguments_parsed_and_forwarded(self):
