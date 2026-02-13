@@ -10,7 +10,7 @@ from app.models.message import MessageRole
 class SendMessageRequest(BaseModel):
     """Request schema for sending a message."""
 
-    content: str = Field(..., min_length=1, max_length=2000)
+    content: str = Field(..., min_length=1, max_length=4096)
 
 
 class MessageResponse(BaseModel):

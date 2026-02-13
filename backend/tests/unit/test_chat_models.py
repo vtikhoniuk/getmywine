@@ -103,7 +103,7 @@ class TestChatSchemas:
     """Tests for Pydantic chat schemas."""
 
     def test_send_message_request_validation(self):
-        """SendMessageRequest should validate content length."""
+        """SendMessageRequest should validate content length (max 4096 chars)."""
         from app.schemas.chat import SendMessageRequest
         from pydantic import ValidationError
 
@@ -115,9 +115,13 @@ class TestChatSchemas:
         with pytest.raises(ValidationError):
             SendMessageRequest(content="")
 
-        # Too long content should fail (over 2000 chars)
+        # 4096 chars should succeed (boundary — Telegram parity)
+        msg_max = SendMessageRequest(content="x" * 4096)
+        assert len(msg_max.content) == 4096
+
+        # Too long content should fail (over 4096 chars)
         with pytest.raises(ValidationError):
-            SendMessageRequest(content="x" * 2001)
+            SendMessageRequest(content="x" * 4097)
 
     def test_message_response_from_attributes(self):
         """MessageResponse should support from_attributes mode."""

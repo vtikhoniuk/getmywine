@@ -56,6 +56,7 @@ class Settings(BaseSettings):
     # Agent loop (agentic RAG)
     agent_max_iterations: int = 2  # Max tool call iterations per request
     embedding_model: str = "text-embedding-3-small"  # Model for query embeddings
+    structured_output_max_retries: int = 2  # Retries after initial attempt (3 total)
 
     # Events API (optional, for real-time events)
     calendarific_api_key: str = ""  # For holiday data

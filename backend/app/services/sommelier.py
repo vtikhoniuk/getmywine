@@ -7,6 +7,7 @@ for intelligent wine recommendations.
 import json
 import logging
 import re
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
 import uuid
@@ -40,6 +41,23 @@ from app.services.llm import LLMService, get_llm_service, LLMError
 from app.services.session_context import CrossSessionContext
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ParseResult:
+    """Structured result from _parse_final_response.
+
+    Carries error details so the retry logic knows WHY parsing failed
+    and can include that information in error feedback to the LLM.
+    """
+
+    text: str
+    wine_ids: list[str] = field(default_factory=list)
+    error: str | None = None
+
+    @property
+    def ok(self) -> bool:
+        return self.error is None and bool(self.text.strip())
 
 
 class SommelierService:
@@ -317,9 +335,9 @@ class SommelierService:
                 response_format=SOMMELIER_RESPONSE_SCHEMA,
             )
             # Parse JSON → rendered text so raw JSON never leaks to Telegram
-            rendered, _ = self._parse_final_response(response)
+            result = self._parse_final_response(response)
             logger.info("Generated LLM welcome message (structured JSON)")
-            return rendered
+            return result.text
 
         except LLMError as e:
             logger.warning("LLM generation failed, using fallback: %s", e)
@@ -736,6 +754,81 @@ class SommelierService:
 
         return format_semantic_response(results, filters_applied)
 
+    async def _attempt_parse_with_retry(
+        self,
+        content: str,
+        messages: list[dict],
+        max_retries: int,
+        response_format: dict,
+        system_prompt: str,
+        user_prompt: str,
+    ) -> tuple[tuple[str, list[str]], int, list[str]]:
+        """Parse LLM response with retry on validation failure.
+
+        On failure, appends the invalid response as assistant message and error
+        feedback as user message, then re-calls the LLM. Follows the
+        Instructor/LangChain pattern of feeding errors back to the model.
+
+        Args:
+            content: Raw LLM response content to parse
+            messages: Current conversation messages (mutated on retry)
+            max_retries: Maximum retry attempts
+            response_format: JSON schema for structured output
+            system_prompt: System prompt for retry calls
+            user_prompt: User prompt for retry calls
+
+        Returns:
+            Tuple of ((text, wine_ids), retry_count, retry_errors)
+        """
+        retry_errors: list[str] = []
+
+        parse_result = self._parse_final_response(content)
+        if parse_result.ok:
+            return (parse_result.text, parse_result.wine_ids), 0, retry_errors
+
+        # First attempt failed — enter retry loop
+        current_content = content
+        for attempt in range(1, max_retries + 1):
+            error_desc = parse_result.error or "Unknown parse error"
+            retry_errors.append(error_desc)
+            logger.info(
+                "Structured output retry %d/%d: %s",
+                attempt, max_retries, error_desc,
+            )
+
+            # Append invalid response as assistant msg + error feedback as user msg
+            messages.append({"role": "assistant", "content": current_content})
+            messages.append({
+                "role": "user",
+                "content": (
+                    f"Your previous response failed validation: {error_desc}. "
+                    "Please respond again with valid JSON matching the required schema. "
+                    "Do not include any text outside the JSON object."
+                ),
+            })
+
+            # Re-call LLM with error feedback in context
+            response = await self.llm_service.generate_with_tools(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                tools=None,
+                messages=messages,
+                response_format=response_format,
+            )
+            current_content = response.content or ""
+            parse_result = self._parse_final_response(current_content)
+
+            if parse_result.ok:
+                logger.info("Structured output retry %d/%d succeeded", attempt, max_retries)
+                return (parse_result.text, parse_result.wine_ids), attempt, retry_errors
+
+        # All retries exhausted
+        logger.warning(
+            "Structured output retries exhausted after %d attempts", max_retries,
+        )
+        retry_errors.append(parse_result.error or "Unknown parse error")
+        return ("", []), max_retries, retry_errors
+
     @observe(name="generate_agentic_response")
     async def generate_agentic_response(
         self,
@@ -752,14 +845,13 @@ class SommelierService:
         from app.config import get_settings
         from app.services.sommelier_prompts import (
             SOMMELIER_RESPONSE_SCHEMA,
-            SommelierResponse,
             WINE_TOOLS,
             build_unified_user_prompt,
-            render_response_text,
         )
 
         settings = get_settings()
         max_iterations = settings.agent_max_iterations
+        max_retries = settings.structured_output_max_retries
 
         # Build user prompt with context
         user_prompt = build_unified_user_prompt(
@@ -788,25 +880,56 @@ class SommelierService:
                     response_format=SOMMELIER_RESPONSE_SCHEMA,
                 )
 
-                # Handle refusal or truncation
+                # Handle refusal — do NOT retry (FR-004)
                 finish_reason = getattr(response, "finish_reason", None)
                 if finish_reason == "refusal":
                     logger.warning("LLM refused structured output, returning as-is")
-                    return self._parse_final_response(response.content or "")
+                    result = self._parse_final_response(response.content or "")
+                    self._update_langfuse_metadata(tools_used, iteration)
+                    return (result.text, result.wine_ids)
+
+                # Handle truncation — retry with feedback
                 if finish_reason == "length":
                     logger.warning("LLM response truncated (finish_reason=length)")
-                    return self._parse_final_response(response.content or "")
+                    content = response.content or ""
+                    (text, wine_ids), retries, errors = await self._attempt_parse_with_retry(
+                        content=content,
+                        messages=list(messages),
+                        max_retries=max_retries,
+                        response_format=SOMMELIER_RESPONSE_SCHEMA,
+                        system_prompt=system_prompt,
+                        user_prompt=user_prompt,
+                    )
+                    response_type = self._extract_response_type(content) if text else None
+                    self._update_langfuse_metadata(
+                        tools_used, iteration, response_type,
+                        structured_output_retries=retries,
+                        structured_output_errors=errors,
+                    )
+                    return (text, wine_ids)
 
-                # No tool calls — parse JSON response
+                # No tool calls — parse JSON response (with retry)
                 if not response.tool_calls:
                     content = response.content or ""
-                    response_type = self._extract_response_type(content)
-                    self._update_langfuse_metadata(tools_used, iteration, response_type)
-                    logger.debug(
-                        "Agent loop done: iterations=%d, tools_used=%s, content_start=%r",
-                        iteration, tools_used, content[:150],
+                    (text, wine_ids), retries, errors = await self._attempt_parse_with_retry(
+                        content=content,
+                        messages=list(messages),
+                        max_retries=max_retries,
+                        response_format=SOMMELIER_RESPONSE_SCHEMA,
+                        system_prompt=system_prompt,
+                        user_prompt=user_prompt,
                     )
-                    return self._parse_final_response(content)
+                    response_type = self._extract_response_type(content) if text else None
+                    self._update_langfuse_metadata(
+                        tools_used, iteration, response_type,
+                        structured_output_retries=retries,
+                        structured_output_errors=errors,
+                    )
+                    logger.debug(
+                        "Agent loop done: iterations=%d, tools_used=%s, retries=%d",
+                        iteration, tools_used, retries,
+                    )
+                    return (text, wine_ids)
 
                 # Append assistant message with tool_calls as a dict
                 assistant_msg = {"role": "assistant", "content": response.content}
@@ -830,21 +953,21 @@ class SommelierService:
                     tools_used.append(name)
 
                     if name == "search_wines":
-                        result = await self.execute_search_wines(arguments)
+                        tool_result = await self.execute_search_wines(arguments)
                     elif name == "semantic_search":
-                        result = await self.execute_semantic_search(arguments)
+                        tool_result = await self.execute_semantic_search(arguments)
                     else:
-                        result = json.dumps({"error": f"Unknown tool: {name}"})
+                        tool_result = json.dumps({"error": f"Unknown tool: {name}"})
 
                     messages.append({
                         "role": "tool",
                         "tool_call_id": tool_call.id,
-                        "content": result,
+                        "content": tool_result,
                     })
 
                 iteration += 1
 
-            # Max iterations reached — final call without tools
+            # Max iterations reached — final call without tools (with retry)
             response = await self.llm_service.generate_with_tools(
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
@@ -853,9 +976,21 @@ class SommelierService:
                 response_format=SOMMELIER_RESPONSE_SCHEMA,
             )
             content = response.content or ""
-            response_type = self._extract_response_type(content)
-            self._update_langfuse_metadata(tools_used, iteration, response_type)
-            return self._parse_final_response(content)
+            (text, wine_ids), retries, errors = await self._attempt_parse_with_retry(
+                content=content,
+                messages=list(messages),
+                max_retries=max_retries,
+                response_format=SOMMELIER_RESPONSE_SCHEMA,
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+            )
+            response_type = self._extract_response_type(content) if text else None
+            self._update_langfuse_metadata(
+                tools_used, iteration, response_type,
+                structured_output_retries=retries,
+                structured_output_errors=errors,
+            )
+            return (text, wine_ids)
 
         except Exception as e:
             logger.exception("Agent loop error (tool use may not be supported): %s", e)
@@ -895,27 +1030,35 @@ class SommelierService:
         return None
 
     @staticmethod
-    def _parse_final_response(content: str) -> tuple[str, list[str]]:
+    def _parse_final_response(content: str) -> ParseResult:
         """Parse final LLM response: try JSON structured output, fallback to raw text.
 
         Returns:
-            Tuple of (rendered_text, wine_ids) where wine_ids is a list
-            of wine UUID strings from the structured response (empty if fallback).
+            ParseResult with text, wine_ids, and error (None on success).
         """
-        from app.services.sommelier_prompts import SommelierResponse, render_response_text
+        from app.services.sommelier_prompts import (
+            SommelierResponse,
+            render_response_text,
+            validate_semantic_content,
+        )
 
         json_str = SommelierService._extract_json_str(content)
         if json_str:
             # Try Pydantic validation first
             try:
                 parsed = SommelierResponse.model_validate_json(json_str)
+                # Check semantic validity (FR-010)
+                semantic_error = validate_semantic_content(parsed)
+                if semantic_error:
+                    logger.warning("Semantic validation failed: %s", semantic_error)
+                    return ParseResult(text="", wine_ids=[], error=semantic_error)
                 rendered = render_response_text(parsed)
                 wine_ids = [w.wine_id for w in parsed.wines]
                 logger.info(
                     "Parsed structured response: type=%s, wines=%d",
                     parsed.response_type, len(wine_ids),
                 )
-                return (rendered, wine_ids)
+                return ParseResult(text=rendered, wine_ids=wine_ids)
             except Exception as e:
                 logger.warning("Pydantic parse failed: %s — trying json.loads fallback", e)
 
@@ -937,17 +1080,31 @@ class SommelierService:
                     "Fallback json.loads succeeded: wines=%d, rendered_len=%d",
                     len(wine_ids), len(rendered),
                 )
-                return (rendered, wine_ids)
+                return ParseResult(text=rendered, wine_ids=wine_ids)
             except Exception as e2:
                 logger.warning("json.loads fallback also failed: %s", e2)
+                return ParseResult(
+                    text="", wine_ids=[],
+                    error=f"JSON parsing failed: {e2}",
+                )
 
-        return (content, [])
+        # All structured output parsing failed — don't pass raw content through,
+        # as it's either garbage or unparseable JSON that will pollute history / break DB constraints.
+        logger.warning(
+            "All response parsing failed (len=%d), returning empty", len(content),
+        )
+        return ParseResult(
+            text="", wine_ids=[],
+            error=f"No valid JSON found in response (len={len(content)})",
+        )
 
     @staticmethod
     def _update_langfuse_metadata(
         tools_used: list[str],
         iterations: int,
         response_type: str | None = None,
+        structured_output_retries: int = 0,
+        structured_output_errors: list[str] | None = None,
     ) -> None:
         """Update current Langfuse observation with agent loop metadata."""
         if langfuse_context is None:
@@ -956,6 +1113,8 @@ class SommelierService:
             metadata: dict = {
                 "tools_used": tools_used,
                 "iterations": iterations,
+                "structured_output_retries": structured_output_retries,
+                "structured_output_errors": structured_output_errors or [],
             }
             if response_type:
                 metadata["response_type"] = response_type

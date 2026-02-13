@@ -486,11 +486,11 @@
                     id="message-input"
                     class="message-input"
                     placeholder="Спросите о вине..."
-                    maxlength="2000"
+                    maxlength="4096"
                 >
                 <button onclick="sendMessage()" id="send-btn" class="send-btn">Отправить</button>
             </div>
-            <div id="char-count" class="char-count">0 / 2000</div>
+            <div id="char-count" class="char-count">0 / 4096</div>
         </div>
     </div>
 
@@ -519,8 +519,8 @@
         // Update character count
         messageInput.addEventListener('input', () => {
             const len = messageInput.value.length;
-            charCount.textContent = `${len} / 2000`;
-            charCount.className = len > 1900 ? 'char-count warning' : 'char-count';
+            charCount.textContent = `${len} / 4096`;
+            charCount.className = len > 3900 ? 'char-count warning' : 'char-count';
         });
 
         // Send on Enter key
@@ -772,7 +772,7 @@
 
                 // Clear input
                 messageInput.value = '';
-                charCount.textContent = '0 / 2000';
+                charCount.textContent = '0 / 4096';
 
                 // Refresh sessions to update title if it was auto-generated
                 await loadSessions();

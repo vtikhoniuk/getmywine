@@ -182,6 +182,10 @@
 - PostgreSQL 17 (отдельный для Langfuse), ClickHouse (аналитика трейсов), MinIO (blob storage), Redis 7 (очередь) (017-langfuse-monitoring)
 - Python 3.12+ + FastAPI, SQLAlchemy 2.0, python-telegram-bot 21.x, OpenAI SDK (для OpenRouter), Langfuse SDK, Pydantic v2 (018-structured-output)
 - Python 3.12+ + FastAPI, SQLAlchemy 2.0, python-telegram-bot 21.x, OpenAI SDK (OpenRouter), Langfuse SDK, Pydantic v2 (019-expand-wine-responses)
+- Python 3.12+ + FastAPI, SQLAlchemy 2.0, OpenAI SDK (via OpenRouter), Langfuse SDK, Pydantic v2 (020-structured-output-retry)
+- PostgreSQL 16 + pgvector (existing, no schema changes) (020-structured-output-retry)
+- Python 3.12+ + FastAPI, SQLAlchemy 2.0, Alembic, python-telegram-bot 21.x, Pydantic v2, Jinja2/HTMX (021-message-length-limit)
+- PostgreSQL 16 + pgvector (existing DB with Alembic migrations, current head: `014`) (021-message-length-limit)
 
 ## Recent Changes
 - 002-chat-welcome: Added Python 3.12+ + FastAPI, SQLAlchemy 2.0, Jinja2, HTMX

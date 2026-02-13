@@ -384,6 +384,28 @@ def render_response_text(response: SommelierResponse) -> str:
     return "\n\n".join(p for p in parts if p)
 
 
+def validate_semantic_content(response: SommelierResponse) -> str | None:
+    """Check if a structurally valid SommelierResponse has meaningful content.
+
+    Returns None if content is meaningful, error description string if
+    semantically empty. Used by retry logic to detect valid-but-useless responses.
+    """
+    if response.response_type == "recommendation" and not response.wines:
+        return "response_type is 'recommendation' but wines list is empty"
+
+    if response.response_type == "off_topic" and not response.intro.strip():
+        return "response_type is 'off_topic' but intro is empty"
+
+    has_intro = bool(response.intro.strip())
+    has_closing = bool(response.closing.strip())
+    has_wine_descriptions = any(w.description.strip() for w in response.wines)
+
+    if not has_intro and not has_closing and not has_wine_descriptions:
+        return "response is semantically empty: no intro, no closing, no wine descriptions"
+
+    return None
+
+
 # =============================================================================
 # STRUCTURED RESPONSE PARSING
 # =============================================================================

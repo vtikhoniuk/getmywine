@@ -76,7 +76,7 @@ class TestChatMessagesContract:
         assert response.status_code == 422
 
     async def test_too_long_message_returns_422(self, client: AsyncClient):
-        """T020: Message over 2000 chars should return validation error."""
+        """T020: Message over 4096 chars should return validation error."""
         # Register and login
         await client.post(
             "/api/v1/auth/register",
@@ -90,7 +90,7 @@ class TestChatMessagesContract:
 
         response = await client.post(
             "/api/v1/chat/messages",
-            json={"content": "x" * 2001},
+            json={"content": "x" * 4097},
         )
 
         assert response.status_code == 422

@@ -277,14 +277,19 @@ class TelegramBotService:
         # Save messages to history only on success — failed exchanges
         # must NOT pollute conversation context (prevents "history poisoning"
         # where an empty/error response confuses the LLM on subsequent turns).
-        if is_error or not response_text or not response_text.strip():
+        # Safety-net truncation only (no DB constraint)
+        is_empty = not response_text or not response_text.strip()
+
+        if is_error or is_empty:
             logger.warning(
                 "Skipping history save for failed response (empty=%s, error=%s)",
-                not response_text or not response_text.strip(), is_error,
+                is_empty, is_error,
             )
-            if not response_text or not response_text.strip():
+            if is_empty:
                 response_text = ERROR_LLM_UNAVAILABLE
         else:
+            # Truncate for storage if needed (FR-011: show full to user, truncate for DB)
+            content_for_db = self._truncate_for_storage(response_text)
             # Save both user message and assistant response together
             await self.message_repo.create(
                 conversation_id=conversation.id,
@@ -294,7 +299,7 @@ class TelegramBotService:
             await self.message_repo.create(
                 conversation_id=conversation.id,
                 role=MessageRole.ASSISTANT,
-                content=response_text,
+                content=content_for_db,
             )
 
         # Update conversation timestamp
@@ -302,6 +307,35 @@ class TelegramBotService:
         await self.db.commit()
 
         return response_text, wines
+
+    @staticmethod
+    def _truncate_for_storage(text: str, max_length: int = 50_000) -> str:
+        """Truncate text for DB storage at a natural boundary.
+
+        Preserves readability by cutting at paragraph or sentence boundaries.
+        The full response is already sent to the user — this only affects
+        what's stored in conversation history (FR-011).
+        """
+        if len(text) <= max_length:
+            return text
+
+        logger.warning(
+            "Truncating response for DB storage (%d chars → %d max)",
+            len(text), max_length,
+        )
+
+        # Try paragraph boundary
+        last_para = text.rfind("\n\n", 0, max_length)
+        if last_para > 0:
+            return text[:last_para]
+
+        # Try sentence boundary
+        last_sentence = text.rfind(". ", 0, max_length)
+        if last_sentence > 0:
+            return text[:last_sentence + 1]
+
+        # Hard truncate
+        return text[:max_length]
 
     async def _extract_wines_from_response(
         self,

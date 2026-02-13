@@ -28,7 +28,36 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.services.llm import LLMError
-from app.services.sommelier import SommelierService
+from app.services.sommelier import SommelierService, ParseResult
+
+
+# ---------------------------------------------------------------------------
+# Valid SommelierResponse JSON for retry tests
+# ---------------------------------------------------------------------------
+
+VALID_SOMMELIER_JSON = json.dumps({
+    "response_type": "recommendation",
+    "intro": "Вот отличные варианты красного вина!",
+    "wines": [
+        {
+            "wine_id": "550e8400-e29b-41d4-a716-446655440000",
+            "wine_name": "Malbec Reserva 2020",
+            "description": "**Malbec Reserva, Мендоса, Аргентина, 2020, 1800₽**\nОтличный выбор для ужина.",
+        }
+    ],
+    "closing": "Хотите узнать больше о аргентинских винах?",
+    "guard_type": None,
+})
+
+INVALID_JSON = '{"broken": true, "not_a_sommelier_response'
+
+SEMANTICALLY_EMPTY_JSON = json.dumps({
+    "response_type": "recommendation",
+    "intro": "",
+    "wines": [],
+    "closing": "",
+    "guard_type": None,
+})
 
 
 # ---------------------------------------------------------------------------
@@ -111,7 +140,7 @@ class TestSingleIterationWithToolCall:
         service = _make_sommelier_service()
 
         mock_msg_tools = _make_msg_with_tool_calls()
-        mock_msg_content = _make_msg_with_content("[INTRO]Great red wines![/INTRO]")
+        mock_msg_content = _make_msg_with_content(VALID_SOMMELIER_JSON)
 
         # First call -> tool_calls, second call -> content
         service.llm_service.generate_with_tools = AsyncMock(
@@ -126,8 +155,8 @@ class TestSingleIterationWithToolCall:
         # execute_search_wines should have been called once
         service.execute_search_wines.assert_called_once()
 
-        # Final content should be returned
-        assert result[0] == "[INTRO]Great red wines![/INTRO]"
+        # Final content should be the rendered structured response
+        assert "Вот отличные варианты красного вина!" in result[0]
 
     async def test_tool_call_arguments_parsed_and_forwarded(self):
         """Arguments from the tool_call should be parsed and passed to execute_search_wines."""
@@ -173,7 +202,7 @@ class TestMaxIterationsLimit:
         mock_msg_tools_2 = _make_msg_with_tool_calls(
             tool_calls=[_make_mock_tool_call(call_id="call_2")]
         )
-        mock_msg_final = _make_msg_with_content("Final answer after max iterations.")
+        mock_msg_final = _make_msg_with_content(VALID_SOMMELIER_JSON)
 
         # Two iterations of tool_calls, then the forced final call returns content
         service.llm_service.generate_with_tools = AsyncMock(
@@ -183,6 +212,7 @@ class TestMaxIterationsLimit:
         with patch("app.config.get_settings") as mock_get_settings:
             mock_settings = MagicMock()
             mock_settings.agent_max_iterations = 2
+            mock_settings.structured_output_max_retries = 2
             mock_get_settings.return_value = mock_settings
 
             result = await service.generate_agentic_response(
@@ -190,7 +220,7 @@ class TestMaxIterationsLimit:
                 user_message="Find red wine",
             )
 
-        assert result[0] == "Final answer after max iterations."
+        assert "Вот отличные варианты красного вина!" in result[0]
         # LLM should have been called 3 times: 2 with tools + 1 final without
         assert service.llm_service.generate_with_tools.call_count == 3
 
@@ -242,9 +272,7 @@ class TestNoToolCallsDirectResponse:
         """Should return LLM content without executing any tools."""
         service = _make_sommelier_service()
 
-        mock_msg_content = _make_msg_with_content(
-            "[INTRO]Merlot is a wonderful grape...[/INTRO]"
-        )
+        mock_msg_content = _make_msg_with_content(VALID_SOMMELIER_JSON)
         service.llm_service.generate_with_tools = AsyncMock(
             return_value=mock_msg_content
         )
@@ -254,7 +282,7 @@ class TestNoToolCallsDirectResponse:
             user_message="Tell me about Merlot",
         )
 
-        assert result[0] == "[INTRO]Merlot is a wonderful grape...[/INTRO]"
+        assert "Вот отличные варианты красного вина!" in result[0]
         # No tools should have been executed
         service.execute_search_wines.assert_not_called()
 
@@ -262,7 +290,7 @@ class TestNoToolCallsDirectResponse:
         """When LLM responds with content directly, it should be called only once."""
         service = _make_sommelier_service()
 
-        mock_msg_content = _make_msg_with_content("Direct answer.")
+        mock_msg_content = _make_msg_with_content(VALID_SOMMELIER_JSON)
         service.llm_service.generate_with_tools = AsyncMock(
             return_value=mock_msg_content
         )
@@ -420,7 +448,7 @@ class TestIterationCounterIncrements:
         """No tool calls -> 1 LLM call total."""
         service = _make_sommelier_service()
 
-        mock_msg_content = _make_msg_with_content("Direct answer.")
+        mock_msg_content = _make_msg_with_content(VALID_SOMMELIER_JSON)
         service.llm_service.generate_with_tools = AsyncMock(
             return_value=mock_msg_content
         )
@@ -437,7 +465,7 @@ class TestIterationCounterIncrements:
         service = _make_sommelier_service()
 
         mock_msg_tools = _make_msg_with_tool_calls()
-        mock_msg_content = _make_msg_with_content("Answer with search results.")
+        mock_msg_content = _make_msg_with_content(VALID_SOMMELIER_JSON)
 
         service.llm_service.generate_with_tools = AsyncMock(
             side_effect=[mock_msg_tools, mock_msg_content]
@@ -552,7 +580,7 @@ class TestOptionalParameters:
         """When user_profile is provided, it should be reflected in the user prompt."""
         service = _make_sommelier_service()
 
-        mock_msg_content = _make_msg_with_content("Personalized answer.")
+        mock_msg_content = _make_msg_with_content(VALID_SOMMELIER_JSON)
         service.llm_service.generate_with_tools = AsyncMock(
             return_value=mock_msg_content
         )
@@ -572,7 +600,7 @@ class TestOptionalParameters:
         """When events_context is provided, it should be included in the prompt."""
         service = _make_sommelier_service()
 
-        mock_msg_content = _make_msg_with_content("Event-aware answer.")
+        mock_msg_content = _make_msg_with_content(VALID_SOMMELIER_JSON)
         service.llm_service.generate_with_tools = AsyncMock(
             return_value=mock_msg_content
         )
@@ -651,7 +679,7 @@ class TestCombinedToolCalls:
         mock_msg_tools = _make_msg_with_tool_calls(
             tool_calls=[search_tc, semantic_tc]
         )
-        mock_msg_content = _make_msg_with_content("[INTRO]Here are elegant reds![/INTRO]")
+        mock_msg_content = _make_msg_with_content(VALID_SOMMELIER_JSON)
 
         service.llm_service.generate_with_tools = AsyncMock(
             side_effect=[mock_msg_tools, mock_msg_content]
@@ -666,7 +694,7 @@ class TestCombinedToolCalls:
         service.execute_search_wines.assert_called_once()
         service.execute_semantic_search.assert_called_once()
 
-        assert result[0] == "[INTRO]Here are elegant reds![/INTRO]"
+        assert "Вот отличные варианты красного вина!" in result[0]
 
     async def test_both_tool_results_in_messages(self):
         """Messages for second LLM call should contain results from both tools."""
@@ -716,7 +744,7 @@ class TestCombinedToolCalls:
         search_tc = _make_mock_tool_call(call_id="c1", name="search_wines", arguments='{}')
         semantic_tc = _make_mock_tool_call(call_id="c2", name="semantic_search", arguments='{"query": "test"}')
         mock_msg_tools = _make_msg_with_tool_calls(tool_calls=[search_tc, semantic_tc])
-        mock_msg_content = _make_msg_with_content("Done.")
+        mock_msg_content = _make_msg_with_content(VALID_SOMMELIER_JSON)
 
         service.llm_service.generate_with_tools = AsyncMock(
             side_effect=[mock_msg_tools, mock_msg_content]
@@ -781,7 +809,7 @@ class TestContextualQueries:
         """History messages should appear before the current user message in the messages list."""
         service = _make_sommelier_service()
 
-        mock_msg_content = _make_msg_with_content("Sure, here's a budget option.")
+        mock_msg_content = _make_msg_with_content(VALID_SOMMELIER_JSON)
         service.llm_service.generate_with_tools = AsyncMock(
             return_value=mock_msg_content
         )
@@ -841,3 +869,402 @@ class TestContextualQueries:
         # History should still be present
         all_content = " ".join(m.get("content", "") or "" for m in messages)
         assert "посоветуй красное вино" in all_content
+
+
+# ---------------------------------------------------------------------------
+# Retry tests helper: mock settings with structured_output_max_retries
+# ---------------------------------------------------------------------------
+
+
+def _mock_settings_with_retries(max_retries: int = 2):
+    """Create mock settings with structured_output_max_retries."""
+    mock_settings = MagicMock()
+    mock_settings.agent_max_iterations = 2
+    mock_settings.llm_max_history_messages = 10
+    mock_settings.structured_output_max_retries = max_retries
+    return mock_settings
+
+
+# ---------------------------------------------------------------------------
+# T006: Retry on parse failure succeeds
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+class TestRetryOnParseFailureSucceeds:
+    """When first LLM call returns invalid JSON, retry with error feedback succeeds."""
+
+    async def test_retry_on_parse_failure_succeeds(self):
+        """Mock generate_with_tools to return invalid JSON on first call,
+        valid SommelierResponse on second call. Verify retry works."""
+        service = _make_sommelier_service()
+
+        # First call: no tool calls, invalid JSON content
+        msg_invalid = _make_msg_with_content(INVALID_JSON)
+        # Second call (retry): valid structured response
+        msg_valid = _make_msg_with_content(VALID_SOMMELIER_JSON)
+
+        service.llm_service.generate_with_tools = AsyncMock(
+            side_effect=[msg_invalid, msg_valid]
+        )
+
+        with patch("app.config.get_settings") as mock_get_settings:
+            mock_get_settings.return_value = _mock_settings_with_retries(2)
+
+            result = await service.generate_agentic_response(
+                system_prompt="You are a sommelier.",
+                user_message="Find me a red wine",
+            )
+
+        # Should have called LLM twice (initial + 1 retry)
+        assert service.llm_service.generate_with_tools.call_count == 2
+
+        # Result should be the valid rendered response
+        assert result is not None
+        text, wine_ids = result
+        assert "Вот отличные варианты красного вина!" in text
+        assert len(wine_ids) == 1
+
+    async def test_retry_messages_contain_error_feedback(self):
+        """The retry call should include the invalid response as assistant msg
+        and error feedback as user msg."""
+        service = _make_sommelier_service()
+
+        msg_invalid = _make_msg_with_content(INVALID_JSON)
+        msg_valid = _make_msg_with_content(VALID_SOMMELIER_JSON)
+
+        service.llm_service.generate_with_tools = AsyncMock(
+            side_effect=[msg_invalid, msg_valid]
+        )
+
+        with patch("app.config.get_settings") as mock_get_settings:
+            mock_get_settings.return_value = _mock_settings_with_retries(2)
+
+            await service.generate_agentic_response(
+                system_prompt="You are a sommelier.",
+                user_message="Find wine",
+            )
+
+        # Inspect the second (retry) call's messages
+        retry_call_kwargs = service.llm_service.generate_with_tools.call_args_list[1].kwargs
+        messages = retry_call_kwargs.get("messages")
+
+        # Should contain an assistant message with the invalid content
+        assistant_msgs = [m for m in messages if m.get("role") == "assistant"]
+        assert any(INVALID_JSON in (m.get("content") or "") for m in assistant_msgs), (
+            "Retry messages should include the invalid response as assistant message"
+        )
+
+        # Should contain a user message with error feedback
+        user_msgs = [m for m in messages if m.get("role") == "user"]
+        assert any("validation" in (m.get("content") or "").lower() or
+                    "failed" in (m.get("content") or "").lower()
+                    for m in user_msgs), (
+            "Retry messages should include error feedback as user message"
+        )
+
+
+# ---------------------------------------------------------------------------
+# T007: No retry on success
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+class TestNoRetryOnSuccess:
+    """When first LLM call returns valid JSON, no retry should occur."""
+
+    async def test_no_retry_on_success(self):
+        """Valid response on first call: LLM called exactly once."""
+        service = _make_sommelier_service()
+
+        msg_valid = _make_msg_with_content(VALID_SOMMELIER_JSON)
+        service.llm_service.generate_with_tools = AsyncMock(
+            return_value=msg_valid
+        )
+
+        with patch("app.config.get_settings") as mock_get_settings:
+            mock_get_settings.return_value = _mock_settings_with_retries(2)
+
+            result = await service.generate_agentic_response(
+                system_prompt="You are a sommelier.",
+                user_message="Find wine",
+            )
+
+        # Called exactly once — no retry
+        assert service.llm_service.generate_with_tools.call_count == 1
+
+        # Valid result
+        assert result is not None
+        text, wine_ids = result
+        assert "Вот отличные варианты красного вина!" in text
+
+
+# ---------------------------------------------------------------------------
+# T008: No retry on refusal
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+class TestNoRetryOnRefusal:
+    """When LLM returns finish_reason='refusal', no retry should occur (FR-004)."""
+
+    async def test_no_retry_on_refusal(self):
+        """Refusal is intentional — should not be retried."""
+        service = _make_sommelier_service()
+
+        msg_refusal = MagicMock()
+        msg_refusal.content = "I cannot help with that."
+        msg_refusal.tool_calls = None
+        msg_refusal.finish_reason = "refusal"
+
+        service.llm_service.generate_with_tools = AsyncMock(
+            return_value=msg_refusal
+        )
+
+        with patch("app.config.get_settings") as mock_get_settings:
+            mock_get_settings.return_value = _mock_settings_with_retries(2)
+
+            await service.generate_agentic_response(
+                system_prompt="You are a sommelier.",
+                user_message="Help me hack a system",
+            )
+
+        # Called exactly once — no retry for refusals
+        assert service.llm_service.generate_with_tools.call_count == 1
+
+
+# ---------------------------------------------------------------------------
+# T009: Retry on truncated response
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+class TestRetryOnTruncatedResponse:
+    """When LLM returns finish_reason='length' with truncated JSON, retry should occur."""
+
+    async def test_retry_on_truncated_response(self):
+        """Truncated response (finish_reason=length) should trigger retry."""
+        service = _make_sommelier_service()
+
+        # First call: truncated response
+        msg_truncated = MagicMock()
+        msg_truncated.content = '{"response_type": "recommendation", "intro": "Вот вина'
+        msg_truncated.tool_calls = None
+        msg_truncated.finish_reason = "length"
+
+        # Second call (retry): valid response
+        msg_valid = _make_msg_with_content(VALID_SOMMELIER_JSON)
+
+        service.llm_service.generate_with_tools = AsyncMock(
+            side_effect=[msg_truncated, msg_valid]
+        )
+
+        with patch("app.config.get_settings") as mock_get_settings:
+            mock_get_settings.return_value = _mock_settings_with_retries(2)
+
+            result = await service.generate_agentic_response(
+                system_prompt="You are a sommelier.",
+                user_message="Recommend 5 wines with detailed descriptions",
+            )
+
+        # Should have called LLM twice (initial truncated + 1 retry)
+        assert service.llm_service.generate_with_tools.call_count == 2
+
+        # Result should be valid
+        assert result is not None
+        text, _ = result
+        assert "Вот отличные варианты красного вина!" in text
+
+
+# ---------------------------------------------------------------------------
+# T010: Retry on semantically empty response
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+class TestRetryOnSemanticallyEmptyResponse:
+    """When LLM returns valid JSON but semantically empty, retry should occur (FR-010)."""
+
+    async def test_retry_on_semantically_empty_response(self):
+        """Valid JSON with empty wines[] and empty intro should trigger retry."""
+        service = _make_sommelier_service()
+
+        # First call: semantically empty (valid JSON but useless)
+        msg_empty = _make_msg_with_content(SEMANTICALLY_EMPTY_JSON)
+        # Second call (retry): valid response with actual content
+        msg_valid = _make_msg_with_content(VALID_SOMMELIER_JSON)
+
+        service.llm_service.generate_with_tools = AsyncMock(
+            side_effect=[msg_empty, msg_valid]
+        )
+
+        with patch("app.config.get_settings") as mock_get_settings:
+            mock_get_settings.return_value = _mock_settings_with_retries(2)
+
+            result = await service.generate_agentic_response(
+                system_prompt="You are a sommelier.",
+                user_message="Recommend a wine",
+            )
+
+        # Should have retried
+        assert service.llm_service.generate_with_tools.call_count == 2
+
+        # Result should be the valid response from retry
+        assert result is not None
+        text, wine_ids = result
+        assert "Вот отличные варианты красного вина!" in text
+        assert len(wine_ids) == 1
+
+
+# ---------------------------------------------------------------------------
+# T014: Retry exhaustion returns empty
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+class TestRetryExhaustionReturnsEmpty:
+    """When all retry attempts fail, return empty tuple (graceful degradation)."""
+
+    async def test_retry_exhaustion_returns_empty(self):
+        """All 3 attempts (1 initial + 2 retries) return invalid JSON → empty result."""
+        service = _make_sommelier_service()
+
+        # All calls return invalid JSON
+        msg_invalid_1 = _make_msg_with_content(INVALID_JSON)
+        msg_invalid_2 = _make_msg_with_content('{"also": "broken"}')
+        msg_invalid_3 = _make_msg_with_content('not json at all')
+
+        service.llm_service.generate_with_tools = AsyncMock(
+            side_effect=[msg_invalid_1, msg_invalid_2, msg_invalid_3]
+        )
+
+        with patch("app.config.get_settings") as mock_get_settings:
+            mock_get_settings.return_value = _mock_settings_with_retries(2)
+
+            result = await service.generate_agentic_response(
+                system_prompt="You are a sommelier.",
+                user_message="Find wine",
+            )
+
+        # Called 3 times: 1 initial + 2 retries
+        assert service.llm_service.generate_with_tools.call_count == 3
+
+        # Result is empty (graceful degradation)
+        assert result is not None
+        text, wine_ids = result
+        assert text == ""
+        assert wine_ids == []
+
+    async def test_no_exception_on_exhaustion(self):
+        """Retry exhaustion should not raise an exception."""
+        service = _make_sommelier_service()
+
+        service.llm_service.generate_with_tools = AsyncMock(
+            return_value=_make_msg_with_content(INVALID_JSON)
+        )
+
+        with patch("app.config.get_settings") as mock_get_settings:
+            mock_get_settings.return_value = _mock_settings_with_retries(2)
+
+            # Should not raise
+            result = await service.generate_agentic_response(
+                system_prompt="You are a sommelier.",
+                user_message="Find wine",
+            )
+
+        assert result is not None
+
+
+# ---------------------------------------------------------------------------
+# T015: No history saved on exhaustion (telegram_bot level)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+class TestNoHistorySavedOnExhaustion:
+    """When sommelier returns empty response, telegram_bot should NOT save to history."""
+
+    async def test_empty_response_triggers_error_message(self):
+        """Verify that ParseResult with empty text has ok=False."""
+        result = ParseResult(text="", wine_ids=[])
+        assert not result.ok
+
+    async def test_empty_text_not_ok(self):
+        """Whitespace-only text should also be not-ok."""
+        result = ParseResult(text="   ", wine_ids=[])
+        assert not result.ok
+
+    async def test_valid_text_is_ok(self):
+        """Non-empty text without error is ok."""
+        result = ParseResult(text="Hello!", wine_ids=["abc"])
+        assert result.ok
+
+    async def test_error_with_text_is_not_ok(self):
+        """Even with text, if error is set, result is not ok."""
+        result = ParseResult(text="Some text", wine_ids=[], error="something wrong")
+        assert not result.ok
+
+
+# ---------------------------------------------------------------------------
+# T019: Retry metadata in Langfuse
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+class TestRetryMetadataInLangfuse:
+    """Verify Langfuse metadata includes retry count and error types."""
+
+    async def test_retry_metadata_recorded_on_retry(self):
+        """When a retry occurs, metadata should contain retry count and errors."""
+        service = _make_sommelier_service()
+
+        msg_invalid = _make_msg_with_content(INVALID_JSON)
+        msg_valid = _make_msg_with_content(VALID_SOMMELIER_JSON)
+
+        service.llm_service.generate_with_tools = AsyncMock(
+            side_effect=[msg_invalid, msg_valid]
+        )
+
+        with patch("app.config.get_settings") as mock_get_settings, \
+             patch("app.services.sommelier.langfuse_context") as mock_lf:
+            mock_get_settings.return_value = _mock_settings_with_retries(2)
+
+            await service.generate_agentic_response(
+                system_prompt="You are a sommelier.",
+                user_message="Find wine",
+            )
+
+        # Verify langfuse_context.update_current_observation was called
+        mock_lf.update_current_observation.assert_called()
+        call_kwargs = mock_lf.update_current_observation.call_args.kwargs
+        metadata = call_kwargs.get("metadata", {})
+
+        assert "structured_output_retries" in metadata
+        assert metadata["structured_output_retries"] >= 1
+        assert "structured_output_errors" in metadata
+        assert len(metadata["structured_output_errors"]) >= 1
+
+    async def test_no_retry_metadata_on_success(self):
+        """When no retry occurs, metadata should show retries=0 and empty errors."""
+        service = _make_sommelier_service()
+
+        msg_valid = _make_msg_with_content(VALID_SOMMELIER_JSON)
+        service.llm_service.generate_with_tools = AsyncMock(
+            return_value=msg_valid
+        )
+
+        with patch("app.config.get_settings") as mock_get_settings, \
+             patch("app.services.sommelier.langfuse_context") as mock_lf:
+            mock_get_settings.return_value = _mock_settings_with_retries(2)
+
+            await service.generate_agentic_response(
+                system_prompt="You are a sommelier.",
+                user_message="Find wine",
+            )
+
+        mock_lf.update_current_observation.assert_called()
+        call_kwargs = mock_lf.update_current_observation.call_args.kwargs
+        metadata = call_kwargs.get("metadata", {})
+
+        assert metadata.get("structured_output_retries") == 0
+        assert metadata.get("structured_output_errors") == []
