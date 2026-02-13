@@ -91,3 +91,5 @@ clean:
 # Rebuild and restart
 rebuild: down build up
 
+tunnel:
+	ssh -L 3005:localhost:3005 cloud.ru
