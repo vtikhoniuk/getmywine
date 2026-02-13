@@ -25,16 +25,16 @@ help:
 
 # Docker commands
 build:
-	docker-compose build
+	docker compose build
 
 up:
-	docker-compose up -d
+	docker compose up -d
 
 down:
-	docker-compose down
+	docker compose down
 
 restart:
-	docker-compose restart backend
+	docker compose restart backend
 
 logs-backend:
 	docker logs -f getmywine-backend
@@ -43,7 +43,7 @@ logs-bot:
 	docker logs -f getmywine-telegram-bot
 
 logs-all:
-	docker-compose logs -f
+	docker compose logs -f
 
 # Testing (local)
 test:
@@ -86,10 +86,8 @@ db-reseed:
 
 # Cleanup
 clean:
-	docker-compose down -v --remove-orphans
+	docker compose down -v --remove-orphans
 
 # Rebuild and restart
 rebuild: down build up
 
-srv:
-	ssh -F ~/.ssh/ai-camp/ssh-config team10
