@@ -34,7 +34,7 @@ down:
 	docker compose down
 
 restart:
-	docker compose restart backend
+	docker compose restart
 
 logs-backend:
 	docker logs -f getmywine-backend
