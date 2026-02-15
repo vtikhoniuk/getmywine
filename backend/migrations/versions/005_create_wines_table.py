@@ -82,7 +82,7 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("image_url", sa.String(500), nullable=True),
-        sa.Column("embedding", Vector(1536), nullable=True),
+        sa.Column("embedding", Vector(1024), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(timezone=True),

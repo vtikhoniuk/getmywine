@@ -1,4 +1,4 @@
-.PHONY: help build up down restart logs logs-bot test lint shell db-shell clean db-reset db-reseed
+.PHONY: help build up down restart rebuild-bot logs logs-bot test lint shell db-shell clean db-reset db-reseed
 
 # Default target
 help:
@@ -33,8 +33,18 @@ up:
 down:
 	docker compose down
 
-restart:
-	docker compose restart
+restart: down up
+
+rebuild: down build up
+
+restart-bot:
+	docker compose up -d --force-recreate telegram-bot
+
+rebuild-bot:
+	docker compose up -d --build --force-recreate telegram-bot
+
+clean:
+	docker compose down -v --remove-orphans
 
 logs-backend:
 	docker logs -f getmywine-backend
@@ -83,13 +93,6 @@ db-reseed:
 	docker compose exec backend alembic downgrade 005
 	docker compose exec backend alembic upgrade head
 	@echo "✅ Вина перезаполнены"
-
-# Cleanup
-clean:
-	docker compose down -v --remove-orphans
-
-# Rebuild and restart
-rebuild: down build up
 
 tunnel:
 	ssh -L 3005:localhost:3005 cloud.ru

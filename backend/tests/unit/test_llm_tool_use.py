@@ -34,7 +34,7 @@ def settings():
         s.llm_temperature = 0.7
         s.llm_max_tokens = 2000
         s.llm_max_history_messages = 10
-        s.embedding_model = "text-embedding-3-small"
+        s.embedding_model = "BAAI/bge-m3"
         mock_settings.return_value = s
         yield s
 
@@ -558,7 +558,7 @@ class TestGetQueryEmbedding:
         from app.services.llm import OpenRouterService
 
         mock_embedding_data = MagicMock()
-        mock_embedding_data.embedding = [0.0] * 1536
+        mock_embedding_data.embedding = [0.0] * 1024
 
         mock_embedding_response = MagicMock()
         mock_embedding_response.data = [mock_embedding_data]
@@ -576,7 +576,7 @@ class TestGetQueryEmbedding:
         await service.get_query_embedding("full-bodied red wine")
 
         call_kwargs = mock_openai_client.embeddings.create.call_args.kwargs
-        assert call_kwargs["model"] == "text-embedding-3-small"
+        assert call_kwargs["model"] == "BAAI/bge-m3"
         assert call_kwargs["input"] == "full-bodied red wine"
 
     async def test_llm_service_wrapper_delegates_embedding(

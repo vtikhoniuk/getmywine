@@ -83,42 +83,17 @@ def get_wine_image_path(wine: Wine) -> Optional[Path]:
 def detect_language(message_text: str, telegram_locale: str | None = None) -> str:
     """Detect language from message text, fallback to Telegram locale.
 
+    Bot always responds in Russian — wine names in Latin script
+    should not switch the response language.
+
     Args:
         message_text: The message text to analyze
         telegram_locale: User's Telegram language_code (e.g., "ru", "en")
 
     Returns:
-        Language code: "ru" or "en"
+        Language code: always "ru" (bot targets Russian-speaking audience)
     """
-    if not message_text:
-        # Empty message, use Telegram locale or default to Russian
-        if telegram_locale and telegram_locale.startswith("ru"):
-            return "ru"
-        if telegram_locale and telegram_locale.startswith("en"):
-            return "en"
-        return "ru"  # Default
-
-    # Simple Cyrillic character detection
-    cyrillic_count = sum(1 for c in message_text if "\u0400" <= c <= "\u04FF")
-    total_letters = sum(1 for c in message_text if c.isalpha())
-
-    if total_letters == 0:
-        # No letters, use Telegram locale
-        if telegram_locale and telegram_locale.startswith("en"):
-            return "en"
-        return "ru"
-
-    cyrillic_ratio = cyrillic_count / total_letters
-
-    # If more than 30% Cyrillic, assume Russian
-    if cyrillic_ratio > 0.3:
-        return "ru"
-
-    # Otherwise check Telegram locale
-    if telegram_locale and telegram_locale.startswith("ru"):
-        return "ru"
-
-    return "en"
+    return "ru"
 
 
 def get_language_instruction(language: str) -> str:

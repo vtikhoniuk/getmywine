@@ -5,6 +5,7 @@ import logging
 from telegram import Update
 from telegram.ext import CommandHandler, ContextTypes
 
+from app.bot.messages import ERROR_LLM_UNAVAILABLE
 from app.bot.sender import send_fallback_response, send_wine_recommendations
 from app.core.database import async_session_maker
 from app.services.sommelier import SommelierService
@@ -61,6 +62,13 @@ async def start_command(
             wines = result.get("wines", [])
             welcome_text = result["message"]
 
+            # Save welcome to conversation history
+            if welcome_text and welcome_text.strip():
+                await service.save_welcome_to_history(
+                    conversation_id=conversation.id,
+                    welcome_text=welcome_text,
+                )
+
             # Try structured 5-message format
             sent = await send_wine_recommendations(
                 update, welcome_text, wines, language_code
@@ -81,9 +89,7 @@ async def start_command(
         logger.exception("Error handling /start for user %s: %s", telegram_id, e)
 
         # Send error message (always Russian — service targets RU)
-        await update.message.reply_text(
-            "К сожалению, произошла ошибка. Попробуйте ещё раз через несколько секунд."
-        )
+        await update.message.reply_text(ERROR_LLM_UNAVAILABLE)
 
 
 # Handler instance for registration

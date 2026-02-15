@@ -144,7 +144,7 @@ async def seed_wines(db_session: AsyncSession) -> AsyncGenerator[None, None]:
             price_range=PriceRange(wine_data["price_range"]),
             image_url=wine_data.get("image_url"),
             # embedding is None for SQLite tests (no pgvector support)
-            embedding=[0.0] * 1536 if hasattr(Wine, 'embedding') else None,
+            embedding=[0.0] * 1024 if hasattr(Wine, 'embedding') else None,
         )
         db_session.add(wine)
 

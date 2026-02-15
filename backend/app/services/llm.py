@@ -129,7 +129,7 @@ class OpenRouterService(BaseLLMService):
         kwargs = dict(
             model=self.model,
             temperature=temp,
-            max_tokens=tokens,
+            max_completion_tokens=tokens,
             messages=messages,
             extra_headers={
                 "HTTP-Referer": "https://getmywine.local",
@@ -141,7 +141,9 @@ class OpenRouterService(BaseLLMService):
 
         try:
             response = await self.client.chat.completions.create(**kwargs)
-            return response.choices[0].message.content
+            logger.info("LLM raw response object: %s", response.model_dump_json()[:1000])
+            msg = response.choices[0].message
+            return msg.content
 
         except Exception as e:
             logger.error("OpenRouter API error: %s", e)
@@ -174,13 +176,18 @@ class OpenRouterService(BaseLLMService):
             model=self.model,
             temperature=temp,
             max_tokens=tokens,
+            top_p=settings.llm_top_p,
+            presence_penalty=settings.llm_presence_penalty,
             messages=api_messages,
-            tools=tools,
             extra_headers={
                 "HTTP-Referer": "https://getmywine.local",
                 "X-Title": "GetMyWine",
             },
         )
+        if settings.llm_top_k > 0:
+            kwargs["extra_body"] = {"top_k": settings.llm_top_k}
+        if tools:
+            kwargs["tools"] = tools
         if response_format is not None:
             kwargs["response_format"] = response_format
 

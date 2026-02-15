@@ -49,13 +49,18 @@ class Settings(BaseSettings):
     llm_model: str = "anthropic/claude-sonnet-4"
     llm_temperature: float = 0.7
     llm_max_tokens: int = 2000
+    llm_top_p: float = 0.8
+    llm_top_k: int = 20
+    llm_presence_penalty: float = 1.0
+    # "json_schema" (OpenAI strict) or "json_object" (wider compatibility, e.g. cloud.ru)
+    llm_response_format: str = "json_schema"
 
     # Conversation history
     llm_max_history_messages: int = 10  # How many previous messages to include
 
     # Agent loop (agentic RAG)
     agent_max_iterations: int = 5  # Max tool call iterations per request
-    embedding_model: str = "text-embedding-3-small"  # Model for query embeddings
+    embedding_model: str = "BAAI/bge-m3"  # Model for query embeddings
     structured_output_max_retries: int = 2  # Retries after initial attempt (3 total)
 
     # Events API (optional, for real-time events)

@@ -589,7 +589,7 @@ def _make_sommelier_service_for_semantic_search(
     if search_results is None:
         search_results = []
     if embedding is None:
-        embedding = [0.1] * 1536
+        embedding = [0.1] * 1024
 
     service = MagicMock(spec=SommelierService)
     service.wine_repo = AsyncMock(spec=WineRepository)
@@ -623,7 +623,7 @@ class TestExecuteSemanticSearch:
     @pytest.mark.asyncio
     async def test_execute_semantic_search_calls_repository(self):
         """execute_semantic_search should call wine_repo.semantic_search with embedding."""
-        embedding = [0.5] * 1536
+        embedding = [0.5] * 1024
         service = _make_sommelier_service_for_semantic_search(embedding=embedding)
 
         arguments = {"query": "элегантное красное вино"}

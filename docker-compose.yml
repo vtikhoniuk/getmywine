@@ -18,6 +18,7 @@ services:
       retries: 5
 
   backend:
+    profiles: ["web"]
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -46,6 +47,8 @@ services:
       LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.7}
       LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-2000}
       LLM_MAX_HISTORY_MESSAGES: ${LLM_MAX_HISTORY_MESSAGES:-10}
+      LLM_RESPONSE_FORMAT: ${LLM_RESPONSE_FORMAT:-json_schema}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-m3}
       # Telegram Bot
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_MODE: ${TELEGRAM_MODE:-polling}
@@ -88,7 +91,12 @@ services:
       LLM_MODEL: ${LLM_MODEL:-anthropic/claude-sonnet-4}
       LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.7}
       LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-2000}
+      LLM_TOP_P: ${LLM_TOP_P:-0.8}
+      LLM_TOP_K: ${LLM_TOP_K:-20}
+      LLM_PRESENCE_PENALTY: ${LLM_PRESENCE_PENALTY:-1.0}
       LLM_MAX_HISTORY_MESSAGES: ${LLM_MAX_HISTORY_MESSAGES:-10}
+      LLM_RESPONSE_FORMAT: ${LLM_RESPONSE_FORMAT:-json_schema}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-m3}
       # Telegram Bot
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_MODE: ${TELEGRAM_MODE:-polling}
@@ -104,13 +112,16 @@ services:
       LANGFUSE_TRACING_ENABLED: ${LANGFUSE_TRACING_ENABLED:-true}
     volumes:
       - ./backend/app:/app/app:ro
-    command: python -m app.bot.main
+      - ./backend/migrations:/app/migrations:ro
+    command: >
+      sh -c "alembic upgrade head && python -m app.bot.main"
 
   # =========================================================================
   # Langfuse v3 — LLM Observability (self-hosted)
   # =========================================================================
 
   langfuse-web:
+    profiles: ["langfuse"]
     image: docker.io/langfuse/langfuse:3
     container_name: langfuse-web
     restart: unless-stopped
@@ -172,6 +183,7 @@ services:
       LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD:-devpassword123}
 
   langfuse-worker:
+    profiles: ["langfuse"]
     image: docker.io/langfuse/langfuse-worker:3
     container_name: langfuse-worker
     restart: unless-stopped
@@ -190,6 +202,7 @@ services:
       <<: *langfuse-env
 
   langfuse-postgres:
+    profiles: ["langfuse"]
     image: docker.io/postgres:17
     container_name: langfuse-postgres
     restart: unless-stopped
@@ -208,6 +221,7 @@ services:
       retries: 10
 
   langfuse-clickhouse:
+    profiles: ["langfuse"]
     image: docker.io/clickhouse/clickhouse-server
     container_name: langfuse-clickhouse
     restart: unless-stopped
@@ -230,6 +244,7 @@ services:
       start_period: 1s
 
   langfuse-redis:
+    profiles: ["langfuse"]
     image: docker.io/redis:7
     container_name: langfuse-redis
     restart: unless-stopped
@@ -245,6 +260,7 @@ services:
       retries: 10
 
   langfuse-minio:
+    profiles: ["langfuse"]
     image: cgr.dev/chainguard/minio
     container_name: langfuse-minio
     restart: unless-stopped

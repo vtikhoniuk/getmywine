@@ -11,8 +11,8 @@ class EmbeddingService:
 
     def __init__(self):
         self.api_key = os.getenv("OPENAI_API_KEY")
-        self.model = "text-embedding-3-small"
-        self.dimensions = 1536
+        self.model = "BAAI/bge-m3"
+        self.dimensions = 1024
 
     async def generate_embedding(self, text: str) -> Optional[list[float]]:
         """

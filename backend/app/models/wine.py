@@ -150,7 +150,7 @@ class Wine(Base):
         nullable=True,
     )
     embedding: Mapped[Optional[list[float]]] = mapped_column(
-        Vector(1536),
+        Vector(1024),
         nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(

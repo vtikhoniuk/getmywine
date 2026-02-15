@@ -113,17 +113,24 @@ class SommelierService:
         # Skip wine queries if Wine table doesn't exist (SQLite test environment)
         wines_available = await self._check_wines_available()
         if wines_available:
+            used_ids = []
             for suggestion in suggestions:
-                wine = await self._find_wine_for_suggestion(suggestion, user_profile)
+                wine = await self._find_wine_for_suggestion(
+                    suggestion, user_profile, exclude_ids=used_ids,
+                )
                 if wine:
                     wines.append(wine)
+                    used_ids.append(wine.id)
 
             # Fill with random wines if needed
             if len(wines) < 3:
-                additional = await self.wine_repo.get_list(limit=3 - len(wines))
+                additional = await self.wine_repo.get_list(
+                    limit=3 - len(wines), exclude_ids=used_ids,
+                )
                 wines.extend(additional)
 
         # Generate message
+        message = None
         if use_llm and self.llm_service.is_available:
             message = await self._generate_llm_welcome(
                 suggestions[:len(wines)],
@@ -133,20 +140,26 @@ class SommelierService:
                 day_context,
                 cross_session_context,
             )
-        else:
-            message = build_proactive_message(
-                suggestions[:len(wines)],
-                wines,
-                user_name,
-            )
 
+        if message:
+            return {
+                "message": message,
+                "suggestions": suggestions[:len(wines)],
+                "wines": wines,
+                "context": ctx,
+                "day_context": day_context,
+                "used_llm": True,
+            }
+
+        # LLM unavailable or failed — can't handle follow-up dialog
+        from app.bot.messages import ERROR_LLM_UNAVAILABLE
         return {
-            "message": message,
-            "suggestions": suggestions[:len(wines)],
-            "wines": wines,
+            "message": ERROR_LLM_UNAVAILABLE,
+            "suggestions": [],
+            "wines": [],
             "context": ctx,
             "day_context": day_context,
-            "used_llm": use_llm and self.llm_service.is_available,
+            "used_llm": False,
         }
 
     def _build_context_with_events(
@@ -296,7 +309,7 @@ class SommelierService:
         cross_session_context: Optional[CrossSessionContext] = None,
     ) -> str:
         """Generate welcome message using LLM with structured JSON output."""
-        from app.services.sommelier_prompts import SOMMELIER_RESPONSE_SCHEMA
+        from app.services.sommelier_prompts import get_response_schema
         # Build events context for prompt
         events_text = self._format_events_for_prompt(day_context)
 
@@ -332,16 +345,19 @@ class SommelierService:
             response = await self.llm_service.generate_wine_recommendation(
                 system_prompt=SYSTEM_PROMPT_COLD_START if not user_profile else SYSTEM_PROMPT_PERSONALIZED,
                 user_prompt=user_prompt,
-                response_format=SOMMELIER_RESPONSE_SCHEMA,
+                response_format=get_response_schema(),
             )
             # Parse JSON → rendered text so raw JSON never leaks to Telegram
             result = self._parse_final_response(response)
+            if not result.text:
+                logger.warning("LLM returned empty parsed text")
+                return None
             logger.info("Generated LLM welcome message (structured JSON)")
             return result.text
 
         except LLMError as e:
-            logger.warning("LLM generation failed, using fallback: %s", e)
-            return build_proactive_message(suggestions, wines, user_name)
+            logger.warning("LLM generation failed: %s", e)
+            return None
 
     def _format_events_for_prompt(self, day_context: dict) -> str:
         """Format events for LLM prompt."""
@@ -482,22 +498,16 @@ class SommelierService:
                     )
                 return result
 
-            logger.warning("LLM fallback also failed, using mock")
+            logger.warning("LLM fallback also failed")
 
-        # Final fallback to mock (no LLM available at all)
-        from app.services.ai_mock import MockAIService
-        mock = MockAIService()
-        mock_response = await mock.generate_response_with_context(
-            user_message=user_message,
-            detected_event=detect_event(user_message),
-            detected_food=detect_food(user_message),
-        )
-        return (mock_response, [])
+        # LLM unavailable — return empty so caller shows ERROR_LLM_UNAVAILABLE
+        return ("", [])
 
     async def _find_wine_for_suggestion(
         self,
         suggestion: WineSuggestion,
         user_profile: Optional[dict] = None,
+        exclude_ids: Optional[list] = None,
     ) -> Optional[Wine]:
         """Find a wine matching the suggestion criteria."""
         filters = {}
@@ -530,12 +540,16 @@ class SommelierService:
                     user_profile["budget_max"]
                 )
 
-        # Get wines
-        wines = await self.wine_repo.get_list(limit=1, **filters)
+        # Get wines (excluding already selected)
+        wines = await self.wine_repo.get_list(
+            limit=1, exclude_ids=exclude_ids, **filters,
+        )
 
         # Fallback if no wines found with strict criteria
         if not wines:
-            wines = await self.wine_repo.get_list(limit=1)
+            wines = await self.wine_repo.get_list(
+                limit=1, exclude_ids=exclude_ids,
+            )
 
         return wines[0] if wines else None
 
@@ -694,7 +708,7 @@ class SommelierService:
             filters["price_min"] = price_min
             filters_applied["price_min"] = price_min
 
-        wines = await self.wine_repo.get_list(**filters)
+        wines = await self.wine_repo.get_list(**filters, limit=10)
 
         logger.info("search_wines tool: filters=%s, found=%d", filters_applied, len(wines))
 
@@ -787,7 +801,10 @@ class SommelierService:
                 "content": (
                     f"Your previous response failed validation: {error_desc}. "
                     "Please respond again with valid JSON matching the required schema. "
-                    "Do not include any text outside the JSON object."
+                    "Do not include any text outside the JSON object. "
+                    "CRITICAL: Do NOT invent wines. If search tools returned 0 results, "
+                    "set response_type='informational' and wines=[] (empty array). "
+                    "wine_id MUST be a UUID from search results, NEVER a slug or number."
                 ),
             })
 
@@ -828,7 +845,7 @@ class SommelierService:
         """
         from app.config import get_settings
         from app.services.sommelier_prompts import (
-            SOMMELIER_RESPONSE_SCHEMA,
+            get_response_schema,
             WINE_TOOLS,
             build_unified_user_prompt,
         )
@@ -861,7 +878,6 @@ class SommelierService:
                     user_prompt=user_prompt,
                     tools=WINE_TOOLS,
                     messages=messages,
-                    response_format=SOMMELIER_RESPONSE_SCHEMA,
                 )
 
                 # Handle refusal — do NOT retry (FR-004)
@@ -880,7 +896,7 @@ class SommelierService:
                         content=content,
                         messages=list(messages),
                         max_retries=max_retries,
-                        response_format=SOMMELIER_RESPONSE_SCHEMA,
+                        response_format=get_response_schema(),
                         system_prompt=system_prompt,
                         user_prompt=user_prompt,
                     )
@@ -895,11 +911,17 @@ class SommelierService:
                 # No tool calls — parse JSON response (with retry)
                 if not response.tool_calls:
                     content = response.content or ""
+
+                    # Try to fix wine_ids from tool results before parsing
+                    wine_id_map = self._extract_wine_id_map(messages)
+                    if wine_id_map:
+                        content = self._fix_wine_ids(content, wine_id_map)
+
                     (text, wine_ids), retries, errors = await self._attempt_parse_with_retry(
                         content=content,
                         messages=list(messages),
                         max_retries=max_retries,
-                        response_format=SOMMELIER_RESPONSE_SCHEMA,
+                        response_format=get_response_schema(),
                         system_prompt=system_prompt,
                         user_prompt=user_prompt,
                     )
@@ -957,14 +979,14 @@ class SommelierService:
                 user_prompt=user_prompt,
                 tools=None,
                 messages=messages,
-                response_format=SOMMELIER_RESPONSE_SCHEMA,
+                response_format=get_response_schema(),
             )
             content = response.content or ""
             (text, wine_ids), retries, errors = await self._attempt_parse_with_retry(
                 content=content,
                 messages=list(messages),
                 max_retries=max_retries,
-                response_format=SOMMELIER_RESPONSE_SCHEMA,
+                response_format=get_response_schema(),
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
             )
@@ -995,6 +1017,8 @@ class SommelierService:
     @staticmethod
     def _extract_json_str(content: str) -> Optional[str]:
         """Extract JSON object string from content that may contain surrounding text."""
+        if not content:
+            return None
         # Fast path: content is already pure JSON
         stripped = content.strip()
         if stripped.startswith("{") and stripped.endswith("}"):
@@ -1014,12 +1038,63 @@ class SommelierService:
         return None
 
     @staticmethod
+    def _extract_wine_id_map(messages: list[dict]) -> dict[str, str]:
+        """Extract wine_name → wine_id (UUID) mapping from tool result messages.
+
+        Scans messages for role=tool entries, parses their JSON content,
+        and builds a lookup dict from wine names to their UUIDs.
+        """
+        name_to_id: dict[str, str] = {}
+        for msg in messages:
+            if msg.get("role") != "tool":
+                continue
+            try:
+                data = json.loads(msg.get("content", ""))
+                for wine in data.get("wines", []):
+                    wid = wine.get("wine_id", "")
+                    name = wine.get("name", "")
+                    if wid and name:
+                        name_to_id[name.lower()] = wid
+            except (json.JSONDecodeError, TypeError):
+                continue
+        return name_to_id
+
+    @staticmethod
+    def _fix_wine_ids(content: str, wine_id_map: dict[str, str]) -> str:
+        """Replace invalid wine_ids in JSON content using name→UUID mapping.
+
+        Parses the JSON, matches wine_name to known UUIDs, replaces wine_id,
+        and returns the fixed JSON string.
+        """
+        try:
+            data = json.loads(content)
+            fixed = False
+            for wine in data.get("wines", []):
+                name = (wine.get("wine_name") or "").lower()
+                if name in wine_id_map:
+                    old_id = wine.get("wine_id", "")
+                    new_id = wine_id_map[name]
+                    if old_id != new_id:
+                        wine["wine_id"] = new_id
+                        fixed = True
+            if fixed:
+                logger.info("Fixed wine_ids from tool results mapping")
+                return json.dumps(data, ensure_ascii=False)
+        except (json.JSONDecodeError, TypeError):
+            pass
+        return content
+
+    @staticmethod
     def _parse_final_response(content: str) -> ParseResult:
         """Parse final LLM response: try JSON structured output, fallback to raw text.
 
         Returns:
             ParseResult with text, wine_ids, and error (None on success).
         """
+        if not content:
+            logger.warning("LLM returned empty/None content")
+            return ParseResult(text="", wine_ids=[], error="empty_response")
+
         from app.services.sommelier_prompts import (
             SommelierResponse,
             render_response_text,
@@ -1054,8 +1129,24 @@ class SommelierService:
                 intro = data.get("intro", "")
                 closing = data.get("closing", "")
                 wines_data = data.get("wines", [])
-                wine_ids = [w.get("wine_id", "") for w in wines_data if isinstance(w, dict)]
-                wine_ids = [wid for wid in wine_ids if wid]  # filter empty
+
+                # Collect all wine_ids, validate as UUIDs
+                all_wine_ids = []
+                valid_wine_ids = []
+                for w in wines_data:
+                    if not isinstance(w, dict):
+                        continue
+                    wid = w.get("wine_id", "")
+                    if wid:
+                        all_wine_ids.append(wid)
+                        try:
+                            uuid.UUID(wid)
+                            valid_wine_ids.append(wid)
+                        except (ValueError, AttributeError):
+                            logger.warning("Fallback: invalid wine_id %r (not UUID)", wid)
+
+                # Render ALL wine descriptions in text (for display/sender.py),
+                # but only return valid UUID wine_ids (for DB lookup)
                 parts = [intro]
                 for w in wines_data:
                     if isinstance(w, dict) and w.get("description"):
@@ -1063,10 +1154,10 @@ class SommelierService:
                 parts.append(closing)
                 rendered = "\n\n".join(p for p in parts if p)
                 logger.info(
-                    "Fallback json.loads succeeded: wines=%d, rendered_len=%d",
-                    len(wine_ids), len(rendered),
+                    "Fallback json.loads succeeded: wines=%d, valid_uuids=%d, rendered_len=%d",
+                    len(all_wine_ids), len(valid_wine_ids), len(rendered),
                 )
-                return ParseResult(text=rendered, wine_ids=wine_ids)
+                return ParseResult(text=rendered, wine_ids=valid_wine_ids)
             except Exception as e2:
                 logger.warning("json.loads fallback also failed: %s", e2)
                 return ParseResult(

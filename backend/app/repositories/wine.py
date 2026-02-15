@@ -48,9 +48,13 @@ class WineRepository:
         grape_variety: Optional[str] = None,
         food_pairing: Optional[str] = None,
         region: Optional[str] = None,
+        exclude_ids: Optional[list] = None,
     ) -> list[Wine]:
         """Get list of wines with optional filters."""
         query = select(Wine)
+
+        if exclude_ids:
+            query = query.where(Wine.id.notin_(exclude_ids))
 
         # Apply filters
         if wine_type is not None:

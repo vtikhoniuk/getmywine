@@ -47,17 +47,17 @@ async def main():
     openai_key = os.getenv("OPENAI_API_KEY")
 
     if openrouter_key:
-        print("Using OpenRouter API")
+        base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+        print(f"Using OpenRouter-compatible API ({base_url})")
         client = openai.AsyncOpenAI(
             api_key=openrouter_key,
-            base_url="https://openrouter.ai/api/v1",
+            base_url=base_url,
         )
-        # OpenRouter model for embeddings
-        embedding_model = "openai/text-embedding-3-small"
+        embedding_model = os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3")
     elif openai_key:
         print("Using OpenAI API directly")
         client = openai.AsyncOpenAI(api_key=openai_key)
-        embedding_model = "text-embedding-3-small"
+        embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
     else:
         print("Error: Set OPENROUTER_API_KEY or OPENAI_API_KEY environment variable")
         return

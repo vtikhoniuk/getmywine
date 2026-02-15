@@ -147,8 +147,40 @@ SYSTEM_PROMPT_PERSONALIZED = SYSTEM_PROMPT_BASE + """
 SYSTEM_PROMPT_CONTINUATION = """
 ВАЖНО — ЭТО ПРОДОЛЖЕНИЕ ДИАЛОГА:
 - НЕ здоровайся, НЕ представляйся, НЕ говори кто ты
-- Сразу переходи к ответу на запрос пользователя
-- Используй контекст предыдущих сообщений"""
+- Сразу переходи к ответу на ТЕКУЩИЙ запрос пользователя
+- Последнее сообщение пользователя — ГЛАВНЫЙ приоритет. Предыдущие сообщения — контекст.
+- "а подороже?" / "а подешевле?" → новый поиск с изменённой ценой по тем же критериям.
+
+## ЗАПРЕТ ПОВТОРОВ — КРИТИЧЕСКИ ВАЖНО
+НИКОГДА не повторяй свой предыдущий ответ. Если пользователь задал НОВЫЙ вопрос — дай НОВЫЙ ответ.
+Сравни текущий запрос с предыдущим: если запрос ДРУГОЙ — ответ ОБЯЗАН быть другим.
+
+## КОРОТКИЕ СООБЩЕНИЯ
+Короткие сообщения ВСЕГДА относятся к последнему обсуждённому вину/теме. Определи смысл по контексту:
+- "расскажи про блюда", "подбери блюдо", "с чем сочетать" → подбор БЛЮД к обсуждаемому вину
+- "как подать", "посоветуй как подать" → советы по ПОДАЧЕ вина (температура, декантация, бокалы, сервировка)
+- "расскажи подробнее" → больше деталей о текущей теме
+- "а подороже?", "а подешевле?" → новый поиск вин с другой ценой
+
+## ОТВЕТ НА СОБСТВЕННЫЕ ВОПРОСЫ
+Если твоё предыдущее сообщение заканчивалось вопросом с вариантами, а пользователь выбрал один — отвечай ИМЕННО на выбранный вариант:
+- "...помочь подобрать блюдо или посоветовать как подать?" → "как подать" → советы по подаче (температура, бокалы, декантация), НЕ блюда
+- "...узнать подробнее или с чем сочетать?" → "с чем сочетать" → блюда к вину
+- "...попробовать другой стиль?" → "давай" → поиск вин другого стиля
+
+## ОБСУЖДЕНИЕ БЛЮД
+Когда пользователь спрашивает про блюда к вину ("подбери блюдо", "что подать", "с чем сочетается", "расскажи про блюда"):
+1. response_type: "informational", wines: [] — НЕ рекомендуй вина
+2. Опиши конкретные блюда в intro
+3. НЕ вызывай search_wines и semantic_search
+4. Заверши открытым вопросом в closing
+
+## СОВЕТЫ ПО ПОДАЧЕ ВИНА
+Когда пользователь спрашивает про подачу ("как подать", "посоветуй как подать", "при какой температуре"):
+1. response_type: "informational", wines: []
+2. Расскажи про температуру подачи, тип бокала, декантацию, сервировку — это ДРУГАЯ тема, не блюда!
+3. НЕ повторяй информацию о блюдах из предыдущего ответа
+4. Заверши открытым вопросом в closing"""
 
 
 SYSTEM_PROMPT_AGENTIC = SYSTEM_PROMPT_BASE + """
@@ -163,7 +195,9 @@ SYSTEM_PROMPT_AGENTIC = SYSTEM_PROMPT_BASE + """
 **Выбор инструмента:**
 - Запрос упоминает цену, сорт, страну, блюдо → search_wines
 - Запрос описывает настроение/вкус без конкретных параметров → semantic_search
+- Запрос упоминает НАЗВАНИЕ конкретного вина ("расскажи про Петрикор", "что за Le Black Creation") → semantic_search с названием вина в query
 - Запрос сочетает оба типа → вызови search_wines (для конкретных параметров), затем semantic_search (для абстрактной части)
+- НИКОГДА не вызывай search_wines с пустыми параметрами — это вернёт все вина и переполнит контекст
 
 ## Порядок работы
 
@@ -205,6 +239,15 @@ SYSTEM_PROMPT_AGENTIC = SYSTEM_PROMPT_BASE + """
 
 - Общие вопросы о вине (история, регионы, сорта) БЕЗ запроса конкретных вин — отвечай из своих знаний с response_type "informational" и пустым wines
 - Уточняющие вопросы к пользователю
+
+## Вопросы о конкретном вине ("расскажи про...", "что за вино...", "опиши...")
+
+Если пользователь спрашивает ИНФОРМАЦИЮ о конкретном вине (не просит рекомендацию):
+1. Используй search_wines или semantic_search чтобы найти вино в каталоге
+2. Установи response_type: "informational"
+3. Помести всю информацию о вине в поле intro (развёрнутый текст: название, регион, сорт, вкус, с чем сочетается)
+4. wines: [] — пустой массив! Карточка вина НЕ нужна, вся информация уже в intro
+5. В closing предложи что-то связанное (похожие вина, сочетания с едой)
 
 ВАЖНО: если ты в предыдущем сообщении предложил подобрать конкретные вина (регион, сорт, стиль) и пользователь согласился («давай», «да», «покажи», «хочу»), это запрос на рекомендацию — ОБЯЗАТЕЛЬНО вызови search_wines.
 
@@ -284,9 +327,16 @@ class WineRecommendation(BaseModel):
 
     @field_validator("wine_id")
     @classmethod
-    def wine_id_not_empty(cls, v: str) -> str:
+    def wine_id_must_be_uuid(cls, v: str) -> str:
         if not v.strip():
             raise ValueError("wine_id must not be empty")
+        import uuid
+        try:
+            uuid.UUID(v)
+        except ValueError:
+            raise ValueError(
+                f"wine_id must be a UUID copied EXACTLY from search results, got: '{v}'"
+            )
         return v
 
     @field_validator("wine_name")
@@ -334,7 +384,7 @@ class SommelierResponse(BaseModel):
     model_config = {"extra": "ignore"}
 
 
-SOMMELIER_RESPONSE_SCHEMA = {
+_SOMMELIER_RESPONSE_SCHEMA_STRICT = {
     "type": "json_schema",
     "json_schema": {
         "name": "sommelier_response",
@@ -355,7 +405,7 @@ SOMMELIER_RESPONSE_SCHEMA = {
                     "items": {
                         "type": "object",
                         "properties": {
-                            "wine_id": {"type": "string"},
+                            "wine_id": {"type": "string", "description": "UUID из результатов поиска, например: 0576b43b-b3cb-489d-acdd-0da310edd4b2"},
                             "wine_name": {"type": "string"},
                             "description": {"type": "string"},
                         },
@@ -388,6 +438,20 @@ SOMMELIER_RESPONSE_SCHEMA = {
         },
     },
 }
+
+_SOMMELIER_RESPONSE_SCHEMA_JSON_OBJECT = {"type": "json_object"}
+
+
+def get_response_schema() -> dict:
+    """Return response_format based on LLM_RESPONSE_FORMAT setting."""
+    from app.config import get_settings
+    if get_settings().llm_response_format == "json_object":
+        return _SOMMELIER_RESPONSE_SCHEMA_JSON_OBJECT
+    return _SOMMELIER_RESPONSE_SCHEMA_STRICT
+
+
+# Backward-compatible alias
+SOMMELIER_RESPONSE_SCHEMA = _SOMMELIER_RESPONSE_SCHEMA_STRICT
 
 
 def render_response_text(response: SommelierResponse) -> str:

@@ -74,15 +74,15 @@ def upgrade() -> None:
     model = None
 
     if openrouter_key:
-        print("Using OpenRouter API for embeddings")
+        print("Using OpenRouter-compatible API for embeddings")
         api_key = openrouter_key
-        base_url = "https://openrouter.ai/api/v1"
-        model = "openai/text-embedding-3-small"
+        base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+        model = os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3")
     elif openai_key:
         print("Using OpenAI API for embeddings")
         api_key = openai_key
         base_url = "https://api.openai.com/v1"
-        model = "text-embedding-3-small"
+        model = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
     else:
         print("WARNING: No API key found. Wines will be seeded WITHOUT embeddings.")
         print("Set OPENROUTER_API_KEY or OPENAI_API_KEY to enable semantic search.")

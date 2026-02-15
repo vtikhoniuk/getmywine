@@ -50,7 +50,7 @@ class MessageRepository:
         query = (
             select(Message)
             .where(Message.conversation_id == conversation_id)
-            .order_by(desc(Message.created_at))
+            .order_by(desc(Message.created_at), desc(Message.role))
             .limit(limit + 1)  # Fetch one extra to check if there are more
         )
 

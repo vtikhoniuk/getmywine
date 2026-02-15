@@ -337,6 +337,6 @@ class ConversationRepository:
 
         # Create new conversation
         conversation = await self.create_telegram_conversation(
-            telegram_user_id, title
+            telegram_user_id, title,
         )
         return conversation, True

@@ -166,8 +166,12 @@ class TelegramBotService:
             language_code=language_code,
         )
 
-        # Step 3: Get or create session
-        conversation, _ = await self.create_telegram_session(
+        # Step 3: Close old session and start fresh (/start = new conversation)
+        await self.conversation_repo.close_inactive_telegram_sessions(
+            telegram_user_id=telegram_user.id,
+            inactivity_hours=0,  # close ALL active sessions
+        )
+        conversation = await self.conversation_repo.create_telegram_conversation(
             telegram_user_id=telegram_user.id,
         )
 
@@ -244,7 +248,7 @@ class TelegramBotService:
         # Get conversation history for context (BEFORE saving new message)
         history = await self.get_conversation_history(
             conversation.id,
-            limit=10,  # Last 10 messages for context
+            limit=settings.llm_max_history_messages,
         )
 
         try:
@@ -310,6 +314,27 @@ class TelegramBotService:
         await self.db.commit()
 
         return response_text, wines
+
+    async def save_welcome_to_history(
+        self,
+        conversation_id: uuid.UUID,
+        welcome_text: str,
+    ) -> None:
+        """Save welcome message to conversation history.
+
+        Saves as assistant message so it appears in context for follow-up
+        messages from the user.
+        """
+        content_for_db = self._render_for_history(welcome_text)
+        content_for_db = self._truncate_for_storage(content_for_db)
+        await self.message_repo.create(
+            conversation_id=conversation_id,
+            role=MessageRole.ASSISTANT,
+            content=content_for_db,
+            is_welcome=True,
+        )
+        await self.db.commit()
+        logger.info("Saved welcome message to conversation history")
 
     @staticmethod
     def _render_for_history(text: str) -> str:
